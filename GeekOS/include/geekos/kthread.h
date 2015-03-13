@@ -25,6 +25,7 @@
 struct Kernel_Thread;
 struct User_Context;
 struct Interrupt_State;
+struct Seek_Pos;
 
 /*
  * Queue of threads.
@@ -39,6 +40,16 @@ DEFINE_LIST(Thread_Queue, Kernel_Thread);
 DEFINE_LIST(All_Thread_List, Kernel_Thread);
 
 #define AFFINITY_ANY_CORE	-1
+
+/*
+ * Stores the last seeked postion of a thread
+ */
+struct Seek_Pos {
+	int cylinder;
+	int track;
+	int block;
+};
+
 
 /*
  * Kernel thread context data structure.
@@ -58,6 +69,9 @@ struct Kernel_Thread {
     int affinity;               // prefered core = AFFINITY_ANY_CORE --> can run on any core
     int refCount;
     int detached;               // detached processes don't linger on Exit as zombies waiting for Wait to reap
+
+    /* Last seek position */
+    Seek_Pos* last_seeked;
 
     /* The kernel thread id; also used as process id */
     int pid;

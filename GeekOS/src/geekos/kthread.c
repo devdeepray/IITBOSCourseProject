@@ -116,6 +116,11 @@ static void Init_Thread(struct Kernel_Thread *kthread, void *stackPage,
     kthread->affinity = AFFINITY_ANY_CORE;
     kthread->totalTime = 0;
 
+    /* Initialise the last seeked position */
+    last_seeked->cylinder = 0;
+    last_seeked->track = 0;
+    last_seeked->block = 0;
+
     /*
      * The thread has an implicit self-reference.
      * If the thread is not detached, then its owner

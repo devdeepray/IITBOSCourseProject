@@ -28,6 +28,7 @@
 #include <geekos/signal.h>
 #include <geekos/sem.h>
 #include <geekos/projects.h>
+#include <geekos/virtualdisk.h>
 
 #include <geekos/sys_net.h>
 #include <geekos/pipe.h>
@@ -973,6 +974,25 @@ static int Sys_Alarm(struct Interrupt_State *state) {
     return EUNSUPPORTED;
 }
 
+/* Syscalls for sim_disk */
+
+static int Sys_Vir_Seek(struct Interrupt_State *state) {
+	CURRENT_THREAD->last_seeked->cylinder = strcuut->ebx;
+	CURRENT_THREAD->last_seeked->track = strcuut->ecx;
+	CURRENT_THREAD->last_seeked->block = strcuut->edx;
+	return 0;	
+}
+
+static int Sys_Vir_Read(struct Interrupt_State *state) {
+	return Wait_For_Disk(1, state->ebx);
+}
+
+
+static int Sys_Vir_Write(struct Interrupt_State *state) {
+	return Wait_For_Disk(0, state->ebx);
+}
+
+
 /*
  * Global table of system call handler functions.
  */
@@ -1064,7 +1084,11 @@ const Syscall g_syscallTable[] = {
     Sys_Alarm,
     Sys_Rename,
     Sys_Link,
-    Sys_SymLink
+    Sys_SymLink,
+    /* syscalls for sim_disk virtual disk */
+    Sys_Vir_Seek,
+    Sys_Vir_Read,
+    Sys_Vir_Write
 };
 
 /*
