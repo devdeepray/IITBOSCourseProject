@@ -22,10 +22,35 @@
 
 #ifdef GEEKOS
 
+#define MAXFILESIZE 512
+#define DISK_CONFIG_FILE "/c/diskconf.txt"
+
 /*
  * Public functions
  */
 int Wait_For_Disk(bool, int);
+
+
+struct {
+	int cylinder;
+	
+	/* Disk characteristics */
+	int block_size;
+	int tot_blocks;
+	int tot_tracks_per_cyl;
+	int track_cap;
+	int time_to_shift_cyl;
+	int rot_time;
+	int block_read_time;
+} disk_state;
+
+
+char file[MAXFILESIZE];
+int fileSize;
+extern int pos_in_config_file;
+
+void Init_Sim_Disk();
+int estimateTime(int no_of_bytes);
 
 #endif /* GEEKOS */
 

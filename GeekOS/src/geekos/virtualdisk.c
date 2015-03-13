@@ -31,8 +31,12 @@
  */
 
 #include <geekos/kthread.h>
+#include <geekos/virtualdisk.h>
 #include <geekos/irq.h>
 #include <geekos/timer.h>
+#include <geekos/string.h>
+#include <geekos/fileio.h>
+#include <geekos/vfs.h>
 
 /* ----------------------------------------------------------------------
  * Private data and functions
@@ -42,10 +46,8 @@
  * Queue for diskIOrequests, in case they arrive faster than consumer
  * can deal with them.
  */
-#define QUEUE_SIZE 256
-#define QUEUE_MASK 0xff
-#define NEXT(index) (((index) + 1) & QUEUE_MASK)
 
+int pos_in_config_file = 0;
 static bool ongoingIO = false;
 static int waitingProcesses = 0;
 
@@ -70,15 +72,112 @@ static __inline__ void Stop_DiskIO(void) {
 	ongoingIO = false;
 }
 
-int estimateTime(int bytes)
-{
-   return 4;
+
+/* Add functionality to check for track overflow(platter overlow) */
+int estimateTime(int no_of_bytes) {
+	struct Seek_Pos *seeked = CURRENT_THREAD->last_seeked;
+	int tot_cyl = (disk_state.tot_blocks) / (disk_state.tot_tracks_per_cyl * disk_state.track_cap);
+	
+	int cyl_change;
+	if (disk_state.cylinder > seeked->cylinder) {
+		cyl_change = disk_state.cylinder - seeked->cylinder;
+	}
+	else {
+		cyl_change = seeked->cylinder - disk_state.cylinder;
+	}
+
+	int tot_time = 0;
+	tot_time += disk_state.time_to_shift_cyl * (0.5 * cyl_change / tot_cyl);
+	tot_time += 0.5 * disk_state.rot_time;
+	
+
+	cyl_change = (no_of_bytes / disk_state.block_size) / disk_state.track_cap;
+	tot_time += disk_state.time_to_shift_cyl * (0.5 * cyl_change / tot_cyl); 
+	
+	tot_time += (no_of_bytes / disk_state.block_size) * disk_state.block_read_time;
+	
+
+	/* change disk state */
+
+	disk_state.cylinder = (cyl_change + disk_state.cylinder) % tot_cyl;
+
+	return tot_time;
 }
+
+int readLineFileArray(char* buf) {
+	int i = 0;
+
+	while(1) {
+		if (pos_in_config_file >= fileSize) {
+			pos_in_config_file = 0;
+			buf[i] = 0;
+			return -1;
+		}
+		if (file[pos_in_config_file] == '\n') {
+			pos_in_config_file++;
+			buf[i] = 0;
+			return 0;
+		}
+		else {
+			buf[i] = file[pos_in_config_file];
+			i += 1;
+			pos_in_config_file += 1;
+		}
+	}
+}
+
+
+/*
+file structure on different lines
+	int block_size,
+	int tot_blocks;
+	int tot_tracks;
+	int track_cap;
+	int time_to_shift_cyl;
+	int rot_time;
+	int block_read_time;
+*/
+
+void Init_Sim_Disk() {
+	struct File *file_struct;
+ 	int rc = Open(DISK_CONFIG_FILE, 0, &file_struct);
+	Print("%d", rc);
+	fileSize = Read(file_struct, file, MAXFILESIZE);
+	Close(file_struct);
+	Print("In Init sim disk");
+
+	int a = 0;
+	char buf[20];
+	readLineFileArray(buf);
+	disk_state.block_size = atoi(buf);
+
+	readLineFileArray(buf);
+	disk_state.tot_blocks = atoi(buf);
+
+	readLineFileArray(buf);
+	disk_state.tot_tracks_per_cyl = atoi(buf);
+
+	readLineFileArray(buf);
+	disk_state.track_cap = atoi(buf);
+
+	readLineFileArray(buf);
+	disk_state.time_to_shift_cyl = atoi(buf);
+
+	readLineFileArray(buf);
+	disk_state.rot_time = atoi(buf);
+
+	readLineFileArray(buf);
+	disk_state.block_read_time = atoi(buf);
+
+	disk_state.cylinder = 0;
+}
+
 
 static void Wake_Reading_Thread(int ID)
 {
 //	Disable_Interrupts();
 	Wake_Up_Head(&diskread_waitQueue);
+	 Cancel_Timer(ID);
 //	Enable_Interrupts();
 }
 
@@ -88,11 +187,15 @@ int Wait_For_Disk(bool mode, int bytes) {
 
     
     iflag = Begin_Int_Atomic();
-//Print("Starting loop");    
+
     do {
+	Print("Starting loop %d\n", CURRENT_THREAD->pid);    
         
         if (Is_Disk_Free())
+				{
+					Print("Disk is free %d\n", CURRENT_THREAD->pid);
             break;
+				}
         else
 	{
 	    waitingProcesses++;
@@ -101,22 +204,26 @@ int Wait_For_Disk(bool mode, int bytes) {
 	}
     }
     while (true);
-		
+
+
+
 		//Print("Exit loop");
     int waitTime = estimateTime(bytes);
-//		Disable_Interrupts();
-    Start_Timer(waitTime, Wake_Reading_Thread);
-//		Enable_Interrupts();
+		
+   Start_DiskIO();
+   Print("wait time %d %d\n", CURRENT_THREAD->pid, waitTime);
+	 	Start_Timer(waitTime, Wake_Reading_Thread);
+		
 	//	Print("Binded callback");
-    Start_DiskIO();
-	//	Print("Waiting for read end");
+		Print("Waiting for read end");
     Wait(&diskread_waitQueue);
-    Stop_DiskIO();
+  	Print("Read over");
+		Stop_DiskIO();
     if(waitingProcesses)
     {	
-//      Disable_Interrupts();
+    
       Wake_Up_Head(&disk_waitQueue);
-//      Enable_Interrupts();
+    
     }
     End_Int_Atomic(iflag);
 

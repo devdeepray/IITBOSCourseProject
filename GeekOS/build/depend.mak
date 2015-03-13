@@ -741,6 +741,13 @@ libc/spin.o: ../src/libc/spin.c /usr/include/stdc-predef.h \
  ../include/geekos/ktypes.h \
  /usr/lib/gcc/x86_64-linux-gnu/4.8/include/stdbool.h \
  ../include/geekos/keyboard.h ../include/geekos/screen.h
+libc/virtdiskio.o: ../src/libc/virtdiskio.c /usr/include/stdc-predef.h \
+ ../include/geekos/errno.h ../include/geekos/syscall.h \
+ ../include/libc/fileio.h ../include/geekos/fileio.h \
+ /usr/lib/gcc/x86_64-linux-gnu/4.8/include/stddef.h \
+ ../include/geekos/ktypes.h \
+ /usr/lib/gcc/x86_64-linux-gnu/4.8/include/stdbool.h \
+ ../include/libc/string.h
 libc/errno.o: libc/errno.c /usr/include/stdc-predef.h
 common/fmtout.o: ../src/common/fmtout.c /usr/include/stdc-predef.h \
  /usr/lib/gcc/x86_64-linux-gnu/4.8/include/stdarg.h \

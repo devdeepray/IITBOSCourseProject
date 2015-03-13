@@ -50,7 +50,7 @@
 #include <geekos/sound.h>
 #include <geekos/smp.h>
 #include <geekos/io.h>
-
+#include <geekos/virtualdisk.h>
 
 /*
  * Define this for a self-contained boot floppy
@@ -143,6 +143,7 @@ void Main(struct Boot_Info *bootInfo) {
     /* End sound init */
 
     Mount_Root_Filesystem();
+		Init_Sim_Disk();
 
     TODO_P(PROJECT_VIRTUAL_MEMORY_A, "initialize page file.");
 
@@ -155,12 +156,12 @@ void Main(struct Boot_Info *bootInfo) {
 		
 		struct Kernel_Thread *duProcess[10];
 	int i;
-		for(i = 0; i < 10; ++i)
+		for(i = 0; i < 3; ++i)
 		{
 			Spawn_Foreground(DISKTEST_PROGRAM, DISKTEST_PROGRAM, &duProcess[i]);
 		}
 		
-		for(i = 0;i < 10; ++i)
+		for(i = 0;i < 3; ++i)
 		{
 			Join(duProcess[i]);
 		}
