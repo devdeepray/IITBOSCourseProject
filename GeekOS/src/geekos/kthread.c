@@ -117,9 +117,9 @@ static void Init_Thread(struct Kernel_Thread *kthread, void *stackPage,
     kthread->totalTime = 0;
 
     /* Initialise the last seeked position */
-    last_seeked->cylinder = 0;
-    last_seeked->track = 0;
-    last_seeked->block = 0;
+    kthread->last_seeked->cylinder = 0;
+    kthread->last_seeked->track = 0;
+    kthread->last_seeked->block = 0;
 
     /*
      * The thread has an implicit self-reference.
@@ -917,6 +917,24 @@ void Wake_Up_One(struct Thread_Queue *waitQueue) {
     }
 
     Spin_Unlock(&kthreadLock);
+}
+
+void Wake_Up_Head(struct Thread_Queue *waitQueue) {
+  struct Kernel_Thread *best;
+  
+  KASSERT(!Interrupts_Enabled());
+  KASSERT(waitQueue != NULL); /* try to protect against passing uninitialized pointers in */
+  
+  Spin_Lock(&kthreadLock);
+  
+  best = waitQueue->head;
+  
+  if (best != 0) {
+    Remove_Thread(waitQueue, best);
+    Make_Runnable(best);
+  }
+  
+  Spin_Unlock(&kthreadLock);
 }
 
 /*

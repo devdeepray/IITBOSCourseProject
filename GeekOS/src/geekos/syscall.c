@@ -977,9 +977,9 @@ static int Sys_Alarm(struct Interrupt_State *state) {
 /* Syscalls for sim_disk */
 
 static int Sys_Vir_Seek(struct Interrupt_State *state) {
-	CURRENT_THREAD->last_seeked->cylinder = strcuut->ebx;
-	CURRENT_THREAD->last_seeked->track = strcuut->ecx;
-	CURRENT_THREAD->last_seeked->block = strcuut->edx;
+	CURRENT_THREAD->last_seeked->cylinder = state->ebx;
+	CURRENT_THREAD->last_seeked->track = state->ecx;
+	CURRENT_THREAD->last_seeked->block = state->edx;
 	return 0;	
 }
 

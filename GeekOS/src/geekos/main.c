@@ -69,10 +69,11 @@
 
 #define INIT_PROGRAM "/" ROOT_PREFIX "/shell.exe"
 
-
+#define DISKTEST_PROGRAM "/" ROOT_PREFIX "/vdt.exe"
 
 static void Mount_Root_Filesystem(void);
 static void Spawn_Init_Process(void);
+static void Spawn_DiskUse_Process(void);
 
 /*
  * Kernel C code entry point.
@@ -150,8 +151,22 @@ void Main(struct Boot_Info *bootInfo) {
     Set_Current_Attr(ATTRIB(BLACK, GRAY));
 
     TODO_P(PROJECT_SOUND, "play startup sound");
+    
+		
+		struct Kernel_Thread *duProcess[10];
+	int i;
+		for(i = 0; i < 10; ++i)
+		{
+			Spawn_Foreground(DISKTEST_PROGRAM, DISKTEST_PROGRAM, &duProcess[i]);
+		}
+		
+		for(i = 0;i < 10; ++i)
+		{
+			Join(duProcess[i]);
+		}
 
     Spawn_Init_Process();
+
 
     /* it's time to shutdown the system */
     Hardware_Shutdown();
@@ -171,7 +186,22 @@ static void Mount_Root_Filesystem(void) {
 
 
 
+static void Spawn_DiskUse_Process(void) {
+    int rc;
+    struct Kernel_Thread *duProcess;
 
+    /* Load and run a.exe, the "init" process */
+    Print("Spawning read test process (%s)\n", DISKTEST_PROGRAM);
+    rc = Spawn_Foreground(DISKTEST_PROGRAM, DISKTEST_PROGRAM, &duProcess);
+
+    if (rc != 0) {
+        Print("Failed to spawn disk process: error code = %d\n", rc);
+    } else {
+        /* Wait for it to exit */
+        int exitCode = Join(duProcess);
+        Print("Disk process exited with code %d\n", exitCode);
+    }
+}
 
 
 static void Spawn_Init_Process(void) {

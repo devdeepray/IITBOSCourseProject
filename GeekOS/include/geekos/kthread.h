@@ -71,7 +71,7 @@ struct Kernel_Thread {
     int detached;               // detached processes don't linger on Exit as zombies waiting for Wait to reap
 
     /* Last seek position */
-    Seek_Pos* last_seeked;
+    struct Seek_Pos* last_seeked;
 
     /* The kernel thread id; also used as process id */
     int pid;
@@ -162,6 +162,7 @@ void Switch_To_Thread(struct Kernel_Thread *);
 void Wait(struct Thread_Queue *waitQueue);
 void Wake_Up(struct Thread_Queue *waitQueue);
 void Wake_Up_One(struct Thread_Queue *waitQueue);
+void Wake_Up_Head(struct Thread_Queue *waitQueue);
 
 /*
  * Pointer to currently executing thread.

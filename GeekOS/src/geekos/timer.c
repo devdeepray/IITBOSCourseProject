@@ -231,9 +231,8 @@ void Init_Timer(void) {
 
 int Start_Timer(int ticks, timerCallback cb) {
     int returned_timer_id;
-
-    KASSERT(!Interrupts_Enabled());
-
+		KASSERT(!Interrupts_Enabled());
+		
     if (timeEventCount == MAX_TIMER_EVENTS) {
         Print
             ("timeEventCount == %d == MAX_TIMER_EVENTS; cannot start a new timer",
