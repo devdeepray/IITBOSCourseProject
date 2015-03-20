@@ -1,0 +1,231 @@
+/*
+ * Keyboard driver
+ * Copyright (c) 2001,2004 David H. Hovemeyer <daveho@cs.umd.edu>
+ * $Revision: 1.15 $
+ * 
+ * This is free software.  You are permitted to use,
+ * redistribute, and modify it as specified in the file "COPYING".
+ */
+
+/*
+ * Information sources:
+ * - Chapter 8 of _The Undocumented PC_, 2nd ed, by Frank van Gilluwe,
+ *   ISBN 0-201-47950-8.
+ * - Pages 400-409 of _The Programmers PC Sourcebook_, by Thom Hogan,
+ *   ISBN 1-55615-118-7.
+ */
+
+/*
+ * Credits:
+ * - Peter Gnodde <peter@pcswebdesign.nl> added support for
+ *   the CTRL and ALT modifiers
+ */
+
+/* nspring added partial e0 (101-key, right control) stuff */
+
+/*
+ * TODO list:
+ * - Right now we're assuming an 83-key keyboard.
+ *   Should add support for 101+ keyboards.
+ * - Should toggle keyboard LEDs.
+ */
+
+#include <geekos/kthread.h>
+#include <geekos/virtualdisk.h>
+#include <geekos/irq.h>
+#include <geekos/timer.h>
+#include <geekos/string.h>
+#include <geekos/fileio.h>
+#include <geekos/vfs.h>
+
+/* ----------------------------------------------------------------------
+ * Private data and functions
+ * ---------------------------------------------------------------------- */
+
+/*
+ * Queue for diskIOrequests, in case they arrive faster than consumer
+ * can deal with them.
+ */
+
+static bool ongoingIO = false;
+static int waitingProcesses = 0;
+
+/*
+ * Wait queue for thread(s) waiting for disk events.
+ */
+static struct Thread_Queue disk_waitQueue;
+static struct Thread_Queue diskread_waitQueue;
+
+
+static __inline__ bool Is_Disk_Free(void) {
+    return !ongoingIO;
+}
+
+
+
+static __inline__ void Start_DiskIO(void) {
+	ongoingIO = true; 
+}
+
+static __inline__ void Stop_DiskIO(void) {
+	ongoingIO = false;
+}
+
+
+/* Add functionality to check for track overflow(platter overlow) */
+int estimateTime(int no_of_bytes) {
+	struct Seek_Pos *seeked = CURRENT_THREAD->last_seeked;
+	
+	int cyl_change;
+	if (disk_state.cylinder > seeked->cylinder) {
+		cyl_change = disk_state.cylinder - seeked->cylinder;
+	}
+	else {
+		cyl_change = seeked->cylinder - disk_state.cylinder;
+	}
+
+	int tot_time = 0;
+	tot_time += disk_state.time_to_shift_cyl * cyl_change;
+	tot_time += 0.5 * disk_state.rot_time;
+	
+
+	int tot_cyl_changes = (no_of_bytes / disk_state.block_size) / disk_state.track_cap;
+	tot_time += tot_cyl_changes * disk_state.time_to_shift_cyl;
+	
+	tot_time += (no_of_bytes / disk_state.block_size) * disk_state.block_read_time;
+	
+
+	/* change disk state */
+	int tot_cyl = (disk_state.tot_blocks) / (disk_state.tot_tracks_per_cyl * disk_state.track_cap);
+	disk_state.cylinder = (tot_cyl_changes + disk_state.cylinder) % tot_cyl;
+
+	return tot_time;
+}
+
+int readLineFileArray(char* buf) {
+	int i = 0;
+
+	while(1) {
+		if (pos_in_config_file >= fileSize) {
+			pos_in_config_file = 0;
+			buf[i] = 0;
+			return -1;
+		}
+		if (file[pos_in_config_file] == '\n') {
+			pos_in_config_file++;
+			buf[i] = 0;
+			return 0;
+		}
+		else {
+			buf[i] = file[pos_in_config_file];
+			i += 1;
+			pos_in_config_file += 1;
+		}
+	}
+}
+
+
+/*
+file structure on different lines
+	int block_size,
+	int tot_blocks;
+	int tot_tracks;
+	int track_cap;
+	int time_to_shift_cyl;
+	int rot_time;
+	int block_read_time;
+*/
+
+void Init_Sim_Disk() {
+	int pos_config_file = 0;
+	int configFileSize = 0;
+	char file[MAXFILESIZE];
+
+	struct File *file_struct;
+ 	Open(DISK_CONFIG_FILE, 0, &file_struct);
+	configFileSize = Read(file_struct, file, MAXFILESIZE);
+	Close(file_struct);
+
+	int a = 0;
+	char buf[20];
+	readLineFileArray(buf);
+	disk_state.block_size = atoi(buf);
+
+	readLineFileArray(buf);
+	disk_state.tot_blocks = atoi(buf);
+
+	readLineFileArray(buf);
+	disk_state.tot_tracks_per_cyl = atoi(buf);
+
+	readLineFileArray(buf);
+	disk_state.track_cap = atoi(buf);
+
+	readLineFileArray(buf);
+	disk_state.time_to_shift_cyl = atoi(buf);
+
+	readLineFileArray(buf);
+	disk_state.rot_time = atoi(buf);
+
+	readLineFileArray(buf);
+	disk_state.block_read_time = atoi(buf);
+
+	disk_state.cylinder = 0;
+}
+
+
+static void Wake_Reading_Thread(int ID)
+{
+//	Disable_Interrupts();
+	Wake_Up_Head(&diskread_waitQueue);
+	 Cancel_Timer(ID);
+//	Enable_Interrupts();
+}
+
+int Wait_For_Disk(bool mode, int bytes) {	
+	//Print("Wait fr disk called");
+	bool  iflag;
+
+    
+//    iflag = Begin_Int_Atomic();
+
+    do {
+	Print("Starting loop %d\n", CURRENT_THREAD->pid);    
+        
+        if (Is_Disk_Free())
+				{
+					Print("Disk is free %d\n", CURRENT_THREAD->pid);
+            break;
+				}
+        else
+	{
+	    waitingProcesses++;
+            Wait(&disk_waitQueue);
+	    waitingProcesses--;
+	}
+    }
+    while (true);
+
+
+
+		//Print("Exit loop");
+    int waitTime = estimateTime(bytes);
+		
+   Start_DiskIO();
+   Print("wait time %d %d", CURRENT_THREAD->pid, waitTime);
+	 	Start_Timer(waitTime, Wake_Reading_Thread);
+		
+	//	Print("Binded callback");
+		Print("Waiting for read end");
+    Wait(&diskread_waitQueue);
+  	Print("Read over");
+		Stop_DiskIO();
+    if(waitingProcesses)
+    {	
+    
+      Wake_Up_Head(&disk_waitQueue);
+    
+    }
+  //  End_Int_Atomic(iflag);
+
+    return 0;
+}
