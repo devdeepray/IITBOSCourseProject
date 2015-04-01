@@ -3,23 +3,26 @@
 
 /* This will be located at the first block of the disk */
 struct superblock {
-
 	/* Disk parameters */
-	int blockSizeInBytes;
-	int totBlocks;
+	unsigned int blockSizeInBytes;
+	unsigned int totBlocks;
 
 	/* FS parameters */
-	int diskCacheSize;
-	int fileCacheSize;
-	int numAllocatedBlocks;
-	int firstFreeListBlock;
-	int numFreeListBlocks;
-	int firstInodeBlock;
-	int numInodeBlocks;
-
+	unsigned int diskCacheSize;
+	unsigned int fileCacheSize;
+	unsigned int numAllocatedBlocks;
+	unsigned int firstFreeListBlock;
+	unsigned int numFreeListBlocks;
+	unsigned int firstInodeBlock;
+	unsigned int numInodeBlocks;
 };
 
 extern superblock disk_superblock;
 
-int initSuperBlock(char* initFilePath, *superblock);
-int readSuperBlock(*superblock);
+int writeIntoBlock(int, char*);
+int readIntoMem(int, char*, int*);
+int initSuperBlock(superblock*);
+int readSuperBlock(superblock*);
+int initFreeList();
+int allocateBlock(int*);
+int freeBlock(int);

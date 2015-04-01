@@ -1,98 +1,81 @@
 #include <geekos/blocks.h>
 
-
 superblock disk_superblock;
 
+/*
+	TODO this
+		1) Handle all error codes
+		2) Decide disk and file cache sizes
+	TODO IOCS
+		1) waitGetBlock - will definitely get a disk block (will block if needed) and fix it in the disk cache
+		2) setDirtyBit - will set the dirty bit of the given blockNo in the disk cache (This has to be in the cache as this has not been yet unfixed)
+		3) unFix - unfixes a block so that it can now be considered for eviction if needed.
+		4) getBlockSizeInBytes()
+		5) getTotBlocks()
+	TODO inode
+*/
+
+
 int writeIntoBlock(int blockNo, char* data) {
-	// Release buffer, handle return codes, 	
 	char* block;
-	int rc = waitGetBlock(int blockNo, &block); // Definitely get a block
-	memcpy((void*)block, data, disk_superblock.blockSizeInBytes));
-	
+	int rc = 0;
+	rc = waitGetBlock(int blockNo, &block);
+	if (rc) {
+		return NOSUCHBLOCK;
+	}
+	memcpy((void*)block, data, disk_superblock.blockSizeInBytes);
+	rc = setDirtyBit(blockNo);
+	rc = unFixBlock(blockNo);
 	return 0;
 }
 
-int readIntoMem(int blockNo, char** data, int *blockSize) {
-	// Change it so that data is copied from cache to workspace
-	// Handle cache locks and return code
-	char* block = getBlock(int blockNo); // TODO IOCS
-
-	struct blockMetaData *metadata;
-	metadata = (blockMetaData*) block;
-	
-	*data =  (char*)(block + metadata->startByte);
-	*dataRem = superblock.blockSizeInBytes - metadata->startByte
+int readIntoMem(int blockNo, char* dataDest, int *blockSize) {
+	char* block;
+	int rc = getBlock(int blockNo, &block);
+	memcpy((void*)dataDest, (void*)block, disk_superblock.blockSizeInBytes);
+	unFixBlock(blockNo);
+	*blockSize = disk_superblock.blockSizeInBytes;
 	return 0;
 }
 
 
 
 /*
-file structure on different lines
-	int block_size,
-	int tot_blocks;
-	int tot_tracks;
-	int track_cap;
-	int time_to_shift_cyl;
-	int rot_time;
-	int block_read_time;
-	int diskcachesize
-	int filecachesize
+struct superblock {
+	int blockSizeInBytes;
+	int totBlocks;
+
+	int diskCacheSize;
+	int fileCacheSize;
+	int numAllocatedBlocks;
+	int firstFreeListBlock;
+	int numFreeListBlocks;
+	int firstInodeBlock;
+	int numInodeBlocks;
+};
 */
 
 
-int initSuperBlock(char* initFilePath, *superblock) {
-	struct File *file_struct;
- 	int rc = Open(DISK_CONFIG_FILE, 0, &file_struct);
-	Print("%d", rc);
-	fileSize = Read(file_struct, file, MAXFILESIZE);
-	Close(file_struct);
-	Print("In Init sim disk");
+int initSuperBlock(superblock *disk_superblock) {
+	disk_superblock->blockSizeInBytes = getBlockSizeInBytes();
+	disk_superblock->totBlocks = getTotBlocks();
+	disk_superblock->diskCacheSize;
+	disk_superblock->fileCacheSize;
 
-	char buf[20];
-	readLineFileArray(buf);
-	superblock->blockSizeInBytes = atoi(buf);
-
-	readLineFileArray(buf);
-	superblock->totBlocks = atoi(buf);
-
-	readLineFileArray(buf);
-	superblock->totTracksPerCyl = atoi(buf);
-
-	readLineFileArray(buf);
-	superblock->trackCap = atoi(buf);
-
-	readLineFileArray(buf);
-	superblock->timeToShiftCyl = atoi(buf);
-
-	readLineFileArray(buf);
-	superblock->rotTime = atoi(buf);
-
-	readLineFileArray(buf);
-	superblock->blockReadTime = atoi(buf);
-
-	readLineFileArray(buf);
-	superblock->diskCacheSize = atoi(buf);
-
-	readLineFileArray(buf);
-	superblock->fieCacheSize = atoi(buf);
-
-	superblock->rootDirBlock = 2;
-
-	superblock->currentDiskSize = ;  //
-	superblock->freeListBlock = 1;
-
-	initFreeList(2); // Error handling
-
-	/* Data about metadata in a normal data block */
-	superblock->startMetaDataSize = sizeof(blockMetaData);
-	superblock->endMetaDataSize = 0;
+	disk_superblock->numFreeListBlocks = ((disk_superblock->totBlocks) / (disk_superblock->blockSizeInBytes * 8)) + 1;
+	disk_superblock->numInodeBlocks = ((disk_superblock->totBlocks) / sizeof(inode)) + 1;
+	disk_superblock->firstFreeListBlock = 1;
+	disk_superblock->firstInodeBlock = disk_superblock->firstFreeListBlock + disk_superblock->numFreeListBlocks;
+	disk_superblock->numAllocatedBlocks = 1 + disk_superblock->numInodeBlocks + disk_superblock->numFreeListBlocks;
 }
 
 
 
-int readSuperBlock(*superblock) {
-	memcpy((void*) superblock, getBlock(0), sizeof(superblock)); // TODO getBlock()
+int readSuperBlock(superblock *disk_superblock) {
+	char* block;
+	int rc = getBlock(0);
+	memcpy((void*) disk_superblock, (void*) block, sizeof(superblock));
+	unFixBlock(blockNo);
 	return 0; 
 }
 
@@ -100,52 +83,114 @@ int readSuperBlock(*superblock) {
 
 /*
 	bitwise data
-	
+	assumes that no data exists when this is called 
 */
 
-int initFreeList(int block) {
-	freeList = malloc(superblock.totBlocks * sizeof(unsigned char));
+int initFreeList() {
+	int temp = 1;
+	temp = temp << sizeof(unsigned char) * 8;
+	unsigned char allOnes = temp - 1;
 
-	char* blockPtr = getBlock(block);
-	int i = 0;
-	for (; i < superblock.totBlocks; ++i) {
-		blockPtr[i] = '\0';
+
+	int currBlockNo = disk_superblock.firstFreeListBlock;
+	unsigned char* currBlock;
+	int rc;
+	int totUsed = disk_superblock.numAllocatedBlocks;
+	int count = 0;
+	for (; currBlockNo < disk_superblock.firstFreeListBlock + disk_superblock.numFreeListBlocks; ++currBlockNo) {
+		rc = getBlock(currBlockNo, &currBlock);
+
+		for (int i = 0; i < (disk_superblock.blockSizeInBytes) / sizeof(unsigned char); ++i, count += 8 * sizeof(unsigned char)) {
+			if (count < totUsed) {
+				if (count + sizeof(unsigned char) * 8 > totUsed) {
+					int ones = count + sizeof(unsigned char) * 8 - totUsed;
+					unsigned char someOnes = allOnes << (sizeof(unsigned char) * 8 - ones);
+					currBlock[i] = someOnes;
+				}
+				else {
+					currBlock[i] = allOnes;
+				}
+			}
+			else {
+				currBlock[i] = 0;
+			}
+		}
+		setDirtyBit(currBlockNo);
+		unFixBlock(currBlockNo);
 	}
-}
-
-int allocateBlock(int* freeBlock) {
-
-	int j = 1;
-	j = j << sizeof(unsigned char) - 1;
-
-
-
-	char* freeList = getBlock(superblock.freeListBlock);
-
-	int i = 0;
-
-	while (freeList[i] == j)  {
-		++i;
-	}
-
-	*freeBlock = sizeof(unsigned char) * i;
-
-	char bitmap = freeList[i];
-	while (bitmap && 1) {
-		bitmap = bitmap >> 1;
-		*freeBlock++;
-	}
-
 	return 0;
 }
 
 
+/* TODO allocate only after metadata blocks */
+/* Data blocls are aligned to the sizeof(unsigned char) */
+int allocateBlock(int* freeBlock) {
+	int temp = 1;
+	temp = temp << sizeof(unsigned char) * 8;
+	unsigned char allOnes = temp - 1;
 
-int freeBlock(int block) {
-	int loc = (block / sizeof(unsigned char));
+	*freeBlock = 0;
+	int currBlockNo = disk_superblock.firstFreeListBlock;
+	int rc;
+	unsigned char* currBlock;
+	int found = 0;
+	int posInBlock = (disk_superblock.numAllocatedBlocks / sizeof(unsigned char)); 
+	for (; currBlockNo < disk_superblock.firstFreeListBlock + disk_superblock.numFreeListBlocks; ++currBlockNo) {
+		rc = getBlock(currBlockNo, &currBlock);
 
-	char* freeList = getBlock(superblock.freeListBlock);
+		for (posInBlock = 0; posInBlock < ((disk_superblock.blockSizeInBytes) * 8) / sizeof(unsigned char) * 8; ++posInBlock) {
+			if (currBlock[posInBlock] == allOnes) {
+				*freeBlock += sizeof(unsigned char) * 8;
+			}
+			else {
+				found = 1;
+				break;
+			}
+		}
 
-	freelist[loc] = freelist[loc] & (~(1 << (block % sizeof(unsigned char))));
+		if (found) {
+			unsigned char oneOne = 1;
+			oneOne = oneOne << (sizeof(unsigned char) * 8 - 1);
+			unsigned char currChar = currBlock[posInBlock];
 
+			while(oneOne & currChar) {
+				currChar << 1;
+				*freeBlock++;
+			}
+
+			currBlock[posInBlock] = (currBlock[posInBlock] >> 1) | oneOne;
+
+			disk_superblock.numAllocatedBlocks++;
+
+			setDirtyBit(currBlockNo);
+			unFixBlock(currBlockNo);
+			return 0;
+		}
+		else {
+			unFixBlock(currBlockNo);
+		}
+	}
+	return -1;
+}
+
+
+
+int freeBlock(int blockNo) {
+	int freeListBlockNo = disk_superblock.firstFreeListBlock + (blockNo / (disk_superblock.blockSizeInBytes * 8));
+
+	unsigned char *freeListBlock;
+	int rc = getBlock(freeListBlockNo, freeListBlock);
+
+	blockNo -= (blockNo / (disk_superblock.blockSizeInBytes * 8)) * (disk_superblock.blockSizeInBytes * 8);
+
+	if (freeListBlock[blockNo / sizeof(unsigned char)] >> (sizeof(unsigned char) - (blockNo % sizeof(unsigned char)) - 1) & 1) {	
+		freeListBlock[blockNo / sizeof(unsigned char)] = freeListBlock[blockNo / sizeof(unsigned char)] << 1;
+		setDirtyBit(currBlockNo);
+		unFixBlock(currBlockNo);
+		return 0;
+	}
+	else {
+		unFixBlock(currBlockNo);
+		return 0;
+	}
 }
