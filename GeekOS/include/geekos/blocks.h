@@ -21,13 +21,23 @@ struct superblock {
 
 extern superblock disk_superblock;
 
-int writeIntoBlock(int blockNo, char* data);
-int readIntoMem(int blockNo, char* dataDest, int *blockSize);
-int FormatSimDisk(int noBlocks, int blockSize, int fileCacheSize, int diskCacheSize);
-int initSimDisk();
-int initSuperBlock(int noBlocks, int blockSize, int fileCacheSize, int diskCacheSize);
-int readSuperBlock();
-int writeSuperBlock();
-int initFreeList();
-int allocateBlock(int* freeBlock);
-int freeBlock(int blockNo);
+int Write_Block(int, char*);
+
+int Read_Block(int, char*);
+
+int Format_Disk();
+
+int Init_File_System();
+
+int Format_Super_Block();
+
+int Read_Super_Block();
+
+int Write_Super_Block();
+
+int Init_Free_List();
+
+int Allocate_Block(int*);
+
+
+int Free_Block(int);
