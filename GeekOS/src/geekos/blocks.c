@@ -56,7 +56,7 @@ struct superblock {
 */
 
 
-int initSuperBlock(superblock *disk_superblock) {
+int initSuperBlock() {
 	disk_superblock->blockSizeInBytes = getBlockSizeInBytes();
 	disk_superblock->totBlocks = getTotBlocks();
 	disk_superblock->diskCacheSize;
@@ -71,15 +71,22 @@ int initSuperBlock(superblock *disk_superblock) {
 
 
 
-int readSuperBlock(superblock *disk_superblock) {
+int readSuperBlock() {
 	char* block;
-	int rc = getBlock(0);
+	int rc = getBlock(SUPERBLOCKNO);
 	memcpy((void*) disk_superblock, (void*) block, sizeof(superblock));
-	unFixBlock(blockNo);
+	unFixBlock(SUPERBLOCKNO);
 	return 0; 
 }
 
-
+writeSuperBlock() {
+	char* block;
+	int rc = getBlock(SUPERBLOCKNO);
+	memcpy((void*) block, (void*) disk_superblock, sizeof(superblock));
+	setDirtyBit(SUPERBLOCKNO);
+	unFixBlock(SUPERBLOCKNO);
+	return 0;
+}
 
 /*
 	bitwise data

@@ -1,6 +1,4 @@
 /* Superblock struct */
-
-
 /* This will be located at the first block of the disk */
 struct superblock {
 	/* Disk parameters */
@@ -17,12 +15,15 @@ struct superblock {
 	unsigned int numInodeBlocks;
 };
 
+#define SUPERBLOCKNO 0
+
 extern superblock disk_superblock;
 
 int writeIntoBlock(int, char*);
 int readIntoMem(int, char*, int*);
-int initSuperBlock(superblock*);
-int readSuperBlock(superblock*);
+int initSuperBlock();
+int readSuperBlock();
+int writeSuperBlock();
 int initFreeList();
 int allocateBlock(int*);
 int freeBlock(int);
