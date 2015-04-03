@@ -1,34 +1,13 @@
 /*
- * Keyboard driver
- * Copyright (c) 2001,2004 David H. Hovemeyer <daveho@cs.umd.edu>
- * $Revision: 1.15 $
+ * Simulated disk driver for File System project
+ * Copyright (c) 2015, Group 10 CSE 2016
  * 
  * This is free software.  You are permitted to use,
  * redistribute, and modify it as specified in the file "COPYING".
  */
 
-/*
- * Information sources:
- * - Chapter 8 of _The Undocumented PC_, 2nd ed, by Frank van Gilluwe,
- *   ISBN 0-201-47950-8.
- * - Pages 400-409 of _The Programmers PC Sourcebook_, by Thom Hogan,
- *   ISBN 1-55615-118-7.
- */
 
-/*
- * Credits:
- * - Peter Gnodde <peter@pcswebdesign.nl> added support for
- *   the CTRL and ALT modifiers
- */
 
-/* nspring added partial e0 (101-key, right control) stuff */
-
-/*
- * TODO list:
- * - Right now we're assuming an 83-key keyboard.
- *   Should add support for 101+ keyboards.
- * - Should toggle keyboard LEDs.
- */
 
 #include <geekos/kthread.h>
 #include <geekos/virtualdisk.h>
@@ -42,68 +21,34 @@
  * Private data and functions
  * ---------------------------------------------------------------------- */
 
+
+
+
+// Used for reading the config file
+char file[MAX_FILE_SIZE];
+int fileSize;
+int pos_in_config_file;
+File *disk_file;
+
+
 /*
  * Queue for diskIOrequests, in case they arrive faster than consumer
  * can deal with them.
  */
 
-int pos_in_config_file = 0;
-static bool ongoingIO = false;
+// Number of processes waitin for the disk
 static int waitingProcesses = 0;
 
-/*
- * Wait queue for thread(s) waiting for disk events.
- */
+// Wait for access to disk
 static struct Thread_Queue disk_waitQueue;
+
+// Wait for read to get complete (IO_END)
 static struct Thread_Queue diskread_waitQueue;
 
 
-static __inline__ bool Is_Disk_Free(void) {
-    return !ongoingIO;
-}
 
-
-
-static __inline__ void Start_DiskIO(void) {
-	ongoingIO = true; 
-}
-
-static __inline__ void Stop_DiskIO(void) {
-	ongoingIO = false;
-}
-
-
-/* Add functionality to check for track overflow(platter overlow) */
-int estimateTime(int no_of_bytes) {
-	struct Seek_Pos *seeked = CURRENT_THREAD->last_seeked;
-	int tot_cyl = (disk_state.tot_blocks) / (disk_state.tot_tracks_per_cyl * disk_state.track_cap);
-	
-	int cyl_change;
-	if (disk_state.cylinder > seeked->cylinder) {
-		cyl_change = disk_state.cylinder - seeked->cylinder;
-	}
-	else {
-		cyl_change = seeked->cylinder - disk_state.cylinder;
-	}
-
-	int tot_time = 0;
-	tot_time += disk_state.time_to_shift_cyl * (0.5 * cyl_change / tot_cyl);
-	tot_time += 0.5 * disk_state.rot_time;
-	
-
-	cyl_change = (no_of_bytes / disk_state.block_size) / disk_state.track_cap;
-	tot_time += disk_state.time_to_shift_cyl * (0.5 * cyl_change / tot_cyl); 
-	
-	tot_time += (no_of_bytes / disk_state.block_size) * disk_state.block_read_time;
-	
-
-	/* change disk state */
-
-	disk_state.cylinder = (cyl_change + disk_state.cylinder) % tot_cyl;
-
-	return tot_time;
-}
-
+// Reads a line from the array 
+// Helper
 int readLineFileArray(char* buf) {
 	int i = 0;
 
@@ -129,101 +74,124 @@ int readLineFileArray(char* buf) {
 
 /*
 file structure on different lines
-	int block_size,
-	int tot_blocks;
-	int tot_tracks;
-	int track_cap;
-	int time_to_shift_cyl;
-	int rot_time;
-	int block_read_time;
+	int bytes_per_block
+	int blocks_per_track
+	int tracks_per_cylinder
+	int total_cylinders;
+	float avg_rot_time;
+	float avg_seek_time;
+	float block_read_time;
 */
 
-void Init_Sim_Disk() {
+
+// It opens the disk file, and loads the disk config
+int Init_Sim_Disk() {
 	struct File *file_struct;
- 	int rc = Open(DISK_CONFIG_FILE, 0, &file_struct);
-	Print("%d", rc);
+ 	int rc = Open(DISK_CONFIG_FILE, O_READ, &file_struct);
+	
 	fileSize = Read(file_struct, file, MAXFILESIZE);
 	Close(file_struct);
 	Print("In Init sim disk");
-
 	int a = 0;
 	char buf[20];
 	readLineFileArray(buf);
-	disk_state.block_size = atoi(buf);
+	disk_state.bytes_per_block = atoi(buf);
 
 	readLineFileArray(buf);
-	disk_state.tot_blocks = atoi(buf);
+	disk_hw_data.blocks_per_track = atoi(buf);
 
 	readLineFileArray(buf);
-	disk_state.tot_tracks_per_cyl = atoi(buf);
+	disk_hw_data.tracks_per_cylinder = atoi(buf);
 
 	readLineFileArray(buf);
-	disk_state.track_cap = atoi(buf);
+	disk_hw_data.tot_cylinders = atoi(buf);
 
 	readLineFileArray(buf);
-	disk_state.time_to_shift_cyl = atoi(buf);
+	disk_hw_data.avg_rot_time = atof(buf);
 
 	readLineFileArray(buf);
-	disk_state.rot_time = atoi(buf);
+	disk_hw_data.avg_seek_time = atof(buf);
 
 	readLineFileArray(buf);
-	disk_state.block_read_time = atoi(buf);
+	disk_hw_data.block_read_time = atof(buf);
 
-	disk_state.cylinder = 0;
+	disk_hw_data.cylinder = 0;
+	
+	rc = Open(DISK_FILE, O_READ | O_WRITE, &disk_file);
+}
+
+
+int Read_From_Disk(char *buf, int block_num, int n_blocks)
+{
+	int rc = Seek(disk_file, block_num * disk_hw_data.bytes_per_block);
+	if(rc) return rc;
+	rc = Read(disk_file, buf, n_blocks * disk_hw_data.bytes_per_block);
+	return rc;
+}
+
+int Write_To_Disk(char* buf, int block_num, int n_blocks)
+{
+	int rc = Seek(disk_file, block_num * disk_hw_data.bytes_per_block);
+	if(rc) return rc;
+	rc = Read(disk_file, buf, n_blocks * disk_hw_data.bytes_per_block);
+	return rc;
+}
+
+// Calculates estimate of disk seek time for block num and number of blocks
+float Estimate_Time(int block_number, int n_blocks) {
+	
+	int new_cyl_num = block_number / (blocks_per_track * tracks_per_cylinder);
+	int delta_cyl = new_cyl_num - disk_hw_data.cylinder;
+	delta_cyl = delta_cyl>0?delta_cyl:-delta_cyl;
+	float seek_time = 2 * disk_hw_data.avg_seek_time * ((float)delta_cyl / tot_cylinders);
+	return seek_time + disk_hw_data.avg_rot_time + n_blocks * disk_hw_data.block_read_time;
 }
 
 
 static void Wake_Reading_Thread(int ID)
 {
-//	Disable_Interrupts();
 	Wake_Up_Head(&diskread_waitQueue);
 	 Cancel_Timer(ID);
-//	Enable_Interrupts();
 }
 
-int Wait_For_Disk(bool mode, int bytes) {	
-	//Print("Wait fr disk called");
-	bool  iflag;
 
-    
-    iflag = Begin_Int_Atomic();
+// Get the disk lock, and then sleep for certain amount of time
+int Wait_For_Disk(float time) {	
+	bool  iflag;
+	iflag = Begin_Int_Atomic();
 
     do {
-	Print("Starting loop %d\n", CURRENT_THREAD->pid);    
+			//Print("Starting loop %d\n", CURRENT_THREAD->pid);    
         
-        if (Is_Disk_Free())
-				{
-					Print("Disk is free %d\n", CURRENT_THREAD->pid);
-            break;
-				}
-        else
-	{
-	    waitingProcesses++;
-            Wait(&disk_waitQueue);
-	    waitingProcesses--;
-	}
-    }
-    while (true);
+		if (!(disk_hw_data.is_reading))
+		{
+			//Print("Disk is free %d\n", CURRENT_THREAD->pid);
+			break;
+		}
+		else
+		{
+			waitingProcesses++;
+			Wait(&disk_waitQueue);
+			waitingProcesses--;
+		}
+    }while (true);
 
 
 
-		//Print("Exit loop");
-    int waitTime = estimateTime(bytes);
+    
+	disk_hw_data.is_reading = true;
+	//Start_DiskIO();
+   	//Print("wait time %d %d\n", CURRENT_THREAD->pid, waitTime);
+	Start_Timer(time, Wake_Reading_Thread);
 		
-   Start_DiskIO();
-   Print("wait time %d %d\n", CURRENT_THREAD->pid, waitTime);
-	 	Start_Timer(waitTime, Wake_Reading_Thread);
-		
-	//	Print("Binded callback");
-		Print("Waiting for read end");
+	//Print("Waiting for read end");
     Wait(&diskread_waitQueue);
-  	Print("Read over");
-		Stop_DiskIO();
+  	//Print("Read over");
+	disk_hw_data.is_reading = false;
+    
     if(waitingProcesses)
     {	
-    
-      Wake_Up_Head(&disk_waitQueue);
-    
+		Wake_Up_Head(&disk_waitQueue);
     }
     End_Int_Atomic(iflag);
 

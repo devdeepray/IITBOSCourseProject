@@ -1,56 +1,71 @@
 /*
- * Keyboard driver
- * Copyright (c) 2001, David H. Hovemeyer <daveho@cs.umd.edu>
+ * Simulated disk for File System project
+ * Copyright (c) 2015, Group 10 CSE 2016
  *
  * All rights reserved.
  *
  * This code may not be resdistributed without the permission of the copyright holders.
- * Any student solutions using any of this code base constitute derviced work and may
- * not be redistributed in any form.  This includes (but is not limited to) posting on
- * public forums or web sites, providing copies to (past, present, or future) students
- * enrolled in similar operating systems courses the University of Maryland's CMSC412 course.
  *
- * $Revision: 1.13 $
  * 
  */
 
 #ifndef GEEKOS_VIRTUALDISK_H
 #define GEEKOS_VIRTUALDISK_H
 
+
+
 #include <geekos/ktypes.h>
 
 
 #ifdef GEEKOS
 
-#define MAXFILESIZE 512
+#define MAX_FILE_SIZE 512
 #define DISK_CONFIG_FILE "/c/diskconf.txt"
+#define DISK_FILE "/c/mydisk.img"
+
+
+
+
+
+
+
+struct {
+	// current head pos
+	int cylinder;
+	bool is_reading;
+
+	// Disk characteristics 
+	int bytes_per_block;
+	int blocks_per_track;
+	int tracks_per_cylinder;
+	int tot_cylinders;
+	
+	// All in milliseconds
+	float avg_rot_time; 
+	float avg_seek_time;
+	float block_read_time;
+} disk_hw_data;
+
 
 /*
  * Public functions
  */
-int Wait_For_Disk(bool, int);
+ 
+ 
+// Waits for disk to become available, and then sleeps for time
+int Wait_For_Disk(float time);
 
+// Loads config, and initiates things
+int Init_Sim_Disk();
 
-struct {
-	int cylinder;
-	
-	/* Disk characteristics */
-	int block_size;
-	int tot_blocks;
-	int tot_tracks_per_cyl;
-	int track_cap;
-	int time_to_shift_cyl;
-	int rot_time;
-	int block_read_time;
-} disk_state;
+// Reads block block_num into buf
+int Read_From_Disk(char* buf, int block_num);
 
+// Writes buf to block_num
+int Write_To_Disk(int block_num, char* buf);
 
-char file[MAXFILESIZE];
-int fileSize;
-extern int pos_in_config_file;
-
-void Init_Sim_Disk();
-int estimateTime(int no_of_bytes);
+// Estimates time needed to seek and get to right block
+float Estimate_Time(int block_number);
 
 #endif /* GEEKOS */
 
