@@ -28,7 +28,7 @@
 char file[MAX_FILE_SIZE];
 int fileSize;
 int pos_in_config_file;
-File *disk_file;
+struct File *disk_file;
 
 
 /*
@@ -88,36 +88,37 @@ file structure on different lines
 int Init_Sim_Disk() {
 	struct File *file_struct;
  	int rc = Open(DISK_CONFIG_FILE, O_READ, &file_struct);
-	
-	fileSize = Read(file_struct, file, MAXFILESIZE);
+	if(rc) return rc;
+	fileSize = Read(file_struct, file, MAX_FILE_SIZE);
 	Close(file_struct);
 	Print("In Init sim disk");
 	int a = 0;
 	char buf[20];
 	readLineFileArray(buf);
-	disk_state.bytes_per_block = atoi(buf);
+	disk_hw_data.bytes_per_block = atoi(buf); // Bytes per block
 
 	readLineFileArray(buf);
-	disk_hw_data.blocks_per_track = atoi(buf);
+	disk_hw_data.blocks_per_track = atoi(buf); // Blocks per track
 
 	readLineFileArray(buf);
-	disk_hw_data.tracks_per_cylinder = atoi(buf);
+	disk_hw_data.tracks_per_cylinder = atoi(buf); // Tracks per cyl
 
 	readLineFileArray(buf);
-	disk_hw_data.tot_cylinders = atoi(buf);
+	disk_hw_data.tot_cylinders = atoi(buf); // Total cyl
 
 	readLineFileArray(buf);
-	disk_hw_data.avg_rot_time = atof(buf);
+	disk_hw_data.avg_rot_time = atoi(buf); // In millis
 
 	readLineFileArray(buf);
-	disk_hw_data.avg_seek_time = atof(buf);
+	disk_hw_data.avg_seek_time = atoi(buf); // In millis
 
 	readLineFileArray(buf);
-	disk_hw_data.block_read_time = atof(buf);
+	disk_hw_data.block_read_time = atoi(buf); // In millis per 100 blocks
 
 	disk_hw_data.cylinder = 0;
 	
 	rc = Open(DISK_FILE, O_READ | O_WRITE, &disk_file);
+	return rc;
 }
 
 
@@ -138,13 +139,15 @@ int Write_To_Disk(char* buf, int block_num, int n_blocks)
 }
 
 // Calculates estimate of disk seek time for block num and number of blocks
-float Estimate_Time(int block_number, int n_blocks) {
-	
-	int new_cyl_num = block_number / (blocks_per_track * tracks_per_cylinder);
+float Estimate_Time(int block_number, int n_blocks)
+{		
+	int new_cyl_num = block_number / (disk_hw_data.blocks_per_track * disk_hw_data.tracks_per_cylinder);
 	int delta_cyl = new_cyl_num - disk_hw_data.cylinder;
 	delta_cyl = delta_cyl>0?delta_cyl:-delta_cyl;
-	float seek_time = 2 * disk_hw_data.avg_seek_time * ((float)delta_cyl / tot_cylinders);
-	return seek_time + disk_hw_data.avg_rot_time + n_blocks * disk_hw_data.block_read_time;
+	float seek_time = 2.0f * disk_hw_data.avg_seek_time * ((float)delta_cyl / disk_hw_data.tot_cylinders);
+	float res = seek_time + disk_hw_data.avg_rot_time + n_blocks * disk_hw_data.block_read_time / 100.0f;
+	Print("%f", res);
+	return res;
 }
 
 

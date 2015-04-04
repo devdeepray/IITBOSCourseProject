@@ -157,8 +157,13 @@ geekos/virtualdisk.o: ../src/geekos/virtualdisk.c /usr/include/stdc-predef.h \
  /usr/lib/gcc/x86_64-linux-gnu/4.8/include/stdbool.h \
  ../include/geekos/list.h ../include/geekos/kassert.h \
  ../include/geekos/screen.h ../include/geekos/lock.h \
- ../include/geekos/irq.h ../include/geekos/int.h ../include/geekos/defs.h \
- ../include/geekos/timer.h
+ ../include/geekos/virtualdisk.h ../include/geekos/irq.h \
+ ../include/geekos/int.h ../include/geekos/defs.h \
+ ../include/geekos/timer.h ../include/geekos/string.h \
+ ../include/geekos/../libc/string.h \
+ /usr/lib/gcc/x86_64-linux-gnu/4.8/include/stddef.h \
+ ../include/geekos/fileio.h ../include/geekos/vfs.h \
+ ../include/geekos/blockdev.h
 geekos/user.o: ../src/geekos/user.c /usr/include/stdc-predef.h \
  ../include/geekos/errno.h ../include/geekos/ktypes.h \
  /usr/lib/gcc/x86_64-linux-gnu/4.8/include/stdbool.h \
@@ -664,7 +669,8 @@ geekos/main.o: ../src/geekos/main.c /usr/include/stdc-predef.h \
  ../include/geekos/net/ipdefs.h ../include/geekos/net/routing.h \
  ../include/geekos/net/socket.h ../include/geekos/net/rip.h \
  ../include/geekos/projects.h ../include/geekos/sound.h \
- ../include/geekos/smp.h ../include/geekos/io.h
+ ../include/geekos/smp.h ../include/geekos/io.h \
+ ../include/geekos/virtualdisk.h
 libc/compat.o: ../src/libc/compat.c /usr/include/stdc-predef.h \
  ../include/libc/conio.h \
  /usr/lib/gcc/x86_64-linux-gnu/4.8/include/stddef.h \

@@ -1,32 +1,39 @@
+/*
+ * File map table (aka inode) data structure and functions. 
+ * Copyright (c) 2015, Group 10 CSE 2016
+ *
+ * All rights reserved.
+ *
+ * This code may not be resdistributed without the permission of the copyright holders.
+ *
+ * 
+ */
+
+
 #ifndef FMT_H
 #define FMT_H
 
-#define CACHE_SIZE 4096
-#define BLOCK_SIZE 4096
-#define FILENAME_SIZE 20
-#define INODE_SIZE 14
-//[Super Block][[Inode BITMAP][i+1.......,j]][..........]
-
-//[...12 directly to disk blocks...]
-//[1 points to a disk block full of pointers]
-//[1 points to a disk block full of pointers to block of pointers]
+#include <geekos/oscourse/fsysdef.h>
 
 
-typedef struct MetaData{
-	// int file_descriptor;
-	// char filename[FILENAME_SIZE];
-	int group_id, permissions, file_size;
-} MetaData;
+typedef struct InodeMetaData{
+
+	char filename[FILENAME_SIZE];
+	int group_id, owner_id, permissions, file_size;
+} InodeMetaData;
 
 typedef struct Inode{
-	MetaData meta_data;	
-	int entries[INODE_SIZE];
+
+	InodeMetaData meta_data; // File metadata	
+	int entries[INODE_SIZE]; // Base ptrs
+	int s_nest_ptr; // Single nested ptr 
+	int d_nest_ptr; // Double nested ptr
 } Inode;
 
 typedef struct InodeItem{
-	int i_node_index;
-	int user_count, dirty;
-	Inode i_node;
+
+	int ref_count, dirty;
+	Inode inode;
 	InodeItem* prev, next;
 } InodeItem;
 
@@ -39,7 +46,8 @@ typedef struct InodeManager{
 	int max_bitmap_size;
 	int start_i_node_block;
 
-	InodeItem* cache;
+	InodeItem* cache_head;
+	InodeItem* cache_tail;
 } InodeManager;
 
 InodeManager* i_node_manager;

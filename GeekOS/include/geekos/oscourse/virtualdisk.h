@@ -15,7 +15,8 @@
 
 
 #include <geekos/ktypes.h>
-
+#include <geekos/vfs.h>
+#include <geekos/fileio.h>
 
 #ifdef GEEKOS
 
@@ -55,18 +56,18 @@ struct {
 // Waits for disk to become available, and then sleeps for time
 int Wait_For_Disk(float time);
 
-// Loads config, and initiates things
+// Loads config, and initiates IOCS
 int Init_Sim_Disk();
 
-// Reads block block_num into buf
-int Read_From_Disk(char* buf, int block_num);
+// Reads n_blocks blocks starting from block_num into buf
+int Read_From_Disk(char* buf, int block_num, int n_blocks);
 
-// Writes buf to block_num
-int Write_To_Disk(int block_num, char* buf);
+// Writes n_blocks blocks starting from block_num from buf
+int Write_To_Disk(char* buf, int block_num, int n_blocks);
 
 // Estimates time needed to seek and get to right block
-float Estimate_Time(int block_number);
+float Estimate_Time(int block_number, int n_blocks);
 
 #endif /* GEEKOS */
 
-#endif /* GEEKOS_KEYBOARD_H */
+#endif /* GEEKOS_VIRTUALDISK_H */

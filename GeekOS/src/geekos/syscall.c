@@ -984,12 +984,12 @@ static int Sys_Vir_Seek(struct Interrupt_State *state) {
 }
 
 static int Sys_Vir_Read(struct Interrupt_State *state) {
-	return Wait_For_Disk(1, state->ebx);
+	return Wait_For_Disk(state->ebx);
 }
 
 
 static int Sys_Vir_Write(struct Interrupt_State *state) {
-	return Wait_For_Disk(0, state->ebx);
+	return Wait_For_Disk(state->ebx);
 }
 
 

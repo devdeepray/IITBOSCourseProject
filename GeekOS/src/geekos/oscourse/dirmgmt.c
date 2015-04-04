@@ -15,7 +15,7 @@ struct DirHeader
 struct DirEntry
 {
 	char fname[MAX_FILE_NAME];
-    int inode_num;
+	int inode_num;
 };
 
 
