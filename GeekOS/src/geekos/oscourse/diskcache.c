@@ -142,17 +142,12 @@ int Flush_Cache_Block(int blockNo)
 // Finds a replacement from the free list
 int Find_Replacement(CachePage **rep_page)
 {
-	CachePage *cur = last_free_page;
-	while(cur != NULL) // Loop till first page
-	{
-		// Replacement found
-		(*rep_page) = cur;
-		return 0;
-		// Go to prev page
-		cur = cur->prev;
-	}
-	// No replacement found
-	return -1;
+	// No free page available
+	if(last_free_page == NULL) return -1;
+	
+	// Set cur 
+	*rep_page = last_free_page;
+	return 0;
 }
 
 // Writes a page if it is dirty

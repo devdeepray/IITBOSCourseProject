@@ -109,7 +109,7 @@ int Format_Super_Block() {
 		disk_superblock.rootDirectoryBlock + 1; // 1 for root directory
 
 	// Write the superblock to disk after formating
-	Write_Super_Block();
+	return Write_Super_Block();
 }
 
 
@@ -218,7 +218,8 @@ int Allocate_Block(int* freeBlock) {
 	// Loop to go over all bitmap blocks
 	for(i = 0; i < disk_superblock.numFreeListBitmapBlocks && flag == 0; ++i)
 	{
-		rc = rc | Get_Into_Cache(i + disk_superblock.firstFreeListBitmapBlock, &buf);
+		rc = Get_Into_Cache(i + disk_superblock.firstFreeListBitmapBlock, &buf);
+		if(rc) return rc; // Get into cache error. Fatal
 		// Loop to go over all chars in block
 		for(j = 0; j < disk_superblock.blockSizeInBytes && flag == 0; ++j)
 		{
@@ -241,7 +242,7 @@ int Allocate_Block(int* freeBlock) {
 		rc = rc | Unfix_From_Cache(i + disk_superblock.firstFreeListBitmapBlock);
 		if(flag) rc = rc | Flush_Cache_Block(i + disk_superblock.firstFreeListBitmapBlock);	
 	}
-	
+	return rc;
 }
 
 /* Frees the given block number by setting the corresponding bit in the bitmap to 0 */
