@@ -6,9 +6,6 @@
  * redistribute, and modify it as specified in the file "COPYING".
  */
 
-
-
-
 #include <geekos/kthread.h>
 #include <geekos/virtualdisk.h>
 #include <geekos/irq.h>
@@ -25,7 +22,7 @@
 
 
 // Used for reading the config file
-char file[MAX_FILE_SIZE];
+char file[MAX_CONFIG_FILE_SIZE];
 int fileSize;
 int pos_in_config_file;
 struct File *disk_file;
@@ -89,7 +86,7 @@ int Init_Sim_Disk() {
 	struct File *file_struct;
  	int rc = Open(DISK_CONFIG_FILE, O_READ, &file_struct);
 	if(rc) return rc;
-	fileSize = Read(file_struct, file, MAX_FILE_SIZE);
+	fileSize = Read(file_struct, file, MAX_CONFIG_FILE_SIZE);
 	Close(file_struct);
 	Print("In Init sim disk");
 	int a = 0;
@@ -134,7 +131,7 @@ int Write_To_Disk(char* buf, int block_num, int n_blocks)
 {
 	int rc = Seek(disk_file, block_num * disk_hw_data.bytes_per_block);
 	if(rc) return rc;
-	rc = Read(disk_file, buf, n_blocks * disk_hw_data.bytes_per_block);
+	rc = Write(disk_file, buf, n_blocks * disk_hw_data.bytes_per_block);
 	return rc;
 }
 
@@ -154,7 +151,7 @@ float Estimate_Time(int block_number, int n_blocks)
 static void Wake_Reading_Thread(int ID)
 {
 	Wake_Up_Head(&diskread_waitQueue);
-	 Cancel_Timer(ID);
+	Cancel_Timer(ID);
 }
 
 
@@ -177,11 +174,8 @@ int Wait_For_Disk(float time) {
 			Wait(&disk_waitQueue);
 			waitingProcesses--;
 		}
-    }while (true);
+    } while (true);
 
-
-
-    
 	disk_hw_data.is_reading = true;
 	//Start_DiskIO();
    	//Print("wait time %d %d\n", CURRENT_THREAD->pid, waitTime);

@@ -1,5 +1,5 @@
 #include <geekos/oscourse/hash.h>
-
+#include <geekos/oscourse/fsysdef.h>
 
 typedef struct CachePage_s {
 	char buf[BLOCK_SIZE];

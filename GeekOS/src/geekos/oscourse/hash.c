@@ -4,8 +4,6 @@
 
 #include <geekos/oscourse/hash.h>
 
-
-
 int Compute_Hash(Hashtable *ht, int key)
 {
 	return (key * ht->mult) % ht->size;

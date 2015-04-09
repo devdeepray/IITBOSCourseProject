@@ -14,7 +14,7 @@ struct DirHeader
 
 struct DirEntry
 {
-	char fname[MAX_FILE_NAME];
+	char fname[MAX_FILE_NAME_LENGTH];
 	int inode_num;
 };
 
@@ -63,7 +63,7 @@ struct Path
 	//         : /home/
 	//         : /home/vishal/desktop
 
-	char fname[MAX_FILE_NAME];
+	char fname[MAX_FILE_NAME_LENGTH];
 	Path* childPath;
 	Path()
 	{
@@ -104,7 +104,7 @@ struct Path
 			}
 		}		
 	}
-	// TODO: Should'nt the destructor be written iteratively 
+	// TODO: Shouldn't the destructor be written iteratively 
 	~Path()
 	{
 		if(childPath != NULL)
@@ -112,7 +112,7 @@ struct Path
 			delete childPath;
 		}
 	}
-}
+};
 
 
 int getInodeFromPath(Path path, Inode* inode)

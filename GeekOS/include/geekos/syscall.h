@@ -124,7 +124,8 @@ enum {
     SYS_SYMLINK,                /* Symbloic link two files */
     SYS_VIR_SEEK,				/* Seek on sim_disk virtual disk */
     SYS_VIR_READ,				/* Read on sim_disk virtual disk */
-    SYS_VIR_WRITE				/* Write on sim_disk virtual disk */
+    SYS_VIR_WRITE,				/* Write on sim_disk virtual disk */
+    SYS_VIR_FORMAT              /* Format the sim_disk virtual disk */  
 };
 
 /*

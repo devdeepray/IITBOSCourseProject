@@ -163,7 +163,6 @@ int Init_Free_List() {
 	// Assume all metadata block bits fit in block 1.
 	rc = rc | Write_To_Disk(buf, disk_superblock.firstFreeListBitmapBlock, 1);
 	return rc;
-	
 }
 
 

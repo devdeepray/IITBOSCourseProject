@@ -45,9 +45,7 @@ int Get_Into_Cache(int blockNo, char** buf)
 	}
 	else
 	{
-		
 		// Need to fetch from disk
-		
 		CachePage *rep_page;
 		if(current_cache_size < DISK_CACHE_SIZE) // Cache is still small
 		{
@@ -84,7 +82,6 @@ int Get_Into_Cache(int blockNo, char** buf)
 		Link_To_Cache(rep_page); // Add to main cache
 		rep_page->ref_count = 1; // make refcount 1
 		(*buf) = rep_page->buf;
-			
 	}
 	return 0;
 }
@@ -124,6 +121,13 @@ int Flush_Cache()
 	while(cur != NULL)
 	{
 		rc = rc | Write_If_Dirty(cur);
+		cur = cur->next;
+	}
+	cur = first_free_page;
+	while(cur != NULL)
+	{
+		rc = rc | Write_If_Dirty(cur);
+		cur = cur->next;
 	}
 	return rc;
 }
@@ -134,7 +138,7 @@ int Flush_Cache_Block(int blockNo)
 	CachePage* page;
 	int rc = Get_From_Hash_Table(&cache_hash, blockNo, &page);
 	if(rc) return 0;
-	return Write_If_Dirty(page);
+	return Write_If_Dirty(pageq);
 }
 	
 	

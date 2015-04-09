@@ -98,6 +98,7 @@ InodeItem* searchInCache(int i_node_index){
 	}
 	return NULL;
 }
+
 int releaseInCache(int i_node_index){
 	InodeItem* current_i_node_item = i_node_manager->cache;
 	while(current_i_node_item != NULL){

@@ -33,6 +33,7 @@
 #include <geekos/sys_net.h>
 #include <geekos/pipe.h>
 #include <geekos/mem.h>
+#include <geekos/oscourse/block.h>
 
 extern Spin_Lock_t kthreadLock;
 
@@ -992,6 +993,9 @@ static int Sys_Vir_Write(struct Interrupt_State *state) {
 	return Wait_For_Disk(state->ebx);
 }
 
+static int Sys_Vir_Format(struct Interrupt_State *state) {
+    return Format_Disk();
+}
 
 /*
  * Global table of system call handler functions.
@@ -1088,7 +1092,8 @@ const Syscall g_syscallTable[] = {
     /* syscalls for sim_disk virtual disk */
     Sys_Vir_Seek,
     Sys_Vir_Read,
-    Sys_Vir_Write
+    Sys_Vir_Write,
+    Sys_Vir_Format
 };
 
 /*

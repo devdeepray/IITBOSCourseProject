@@ -12,23 +12,13 @@
 #ifndef GEEKOS_VIRTUALDISK_H
 #define GEEKOS_VIRTUALDISK_H
 
-
-
 #include <geekos/ktypes.h>
 #include <geekos/vfs.h>
 #include <geekos/fileio.h>
 
+#include <geekos/oscourse/fsysdef.h>
+
 #ifdef GEEKOS
-
-#define MAX_FILE_SIZE 512
-#define DISK_CONFIG_FILE "/c/diskconf.txt"
-#define DISK_FILE "/c/mydisk.img"
-
-
-
-
-
-
 
 struct {
 	// current head pos

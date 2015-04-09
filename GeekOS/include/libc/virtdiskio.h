@@ -5,6 +5,6 @@
 int Vir_Seek(int cylinder, int track, int block);
 int Vir_Read(int bytes_to_read, char* buf);
 int Vir_Write(int bytes_to_write, char* buf);
-
+int Vir_Format();
 
 #endif /* VIRTDISKIO_H */

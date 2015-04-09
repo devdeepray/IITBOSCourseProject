@@ -4,9 +4,7 @@
  *
  * All rights reserved.
  *
- * This code may not be resdistributed without the permission of the copyright holders.
- *
- * 
+ * This code may not be redistributed without the permission of the copyright holders.
  */
 
 

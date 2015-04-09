@@ -20,3 +20,5 @@ DEF_SYSCALL(Vir_Write, SYS_VIR_WRITE, int, (int bytes_to_write, char* buf),
 				int arg0 = bytes_to_write;
 				char* arg1 = buf;
 				, SYSCALL_REGS_2)
+
+DEF_SYSCALL(Vir_Format, SYS_VIR_FORMAT, int, (void),, SYSCALL_REGS_0)
