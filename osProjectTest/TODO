@@ -1,0 +1,28 @@
+OFT implementation
+It will contain all open files. Will be a set of inodes, and some rw open info, for protection.
+LFT implementation
+It will contain inodes of open files by the process, it will contain seek point, other status.
+User space 
+Open:
+Takes a path, and r/w perms, will do protection checks, will add FCB to OFT/LFT and return a file descriptor(Local).
+int Open(char* path, int perms, int* fd);
+
+int Close(int fd);
+
+int Read(int fd, char* buf, int nbytes); // buf should be preallocated
+
+int Write(int fd, const char* buf, int nbytes);
+
+int Seek(int fd, int byteLoc);
+
+int Resize(int fd, int newSize);
+
+
+Kernel space:
+Same, keep an LFT for the kernel
+
+ByteStream code
+int WriteBytes(Inode* inode, int startByte, int numBytes, char* buf);
+int ReadBytes(Inode* inode, int startByte, int numBytes, char* buf);
+
+
