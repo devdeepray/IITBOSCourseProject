@@ -5,7 +5,7 @@ It will contain inodes of open files by the process, it will contain seek point,
 User space 
 Open:
 Takes a path, and r/w perms, will do protection checks, will add FCB to OFT/LFT and return a file descriptor(Local).
-int Open(char* path, int perms, int* fd);
+int Open(char* path, char op, int* fd);
 
 int Close(int fd);
 
@@ -13,7 +13,7 @@ int Read(int fd, char* buf, int nbytes); // buf should be preallocated
 
 int Write(int fd, const char* buf, int nbytes);
 
-int Seek(int fd, int byteLoc);
+int Seek(int fd, int byteLoc, SeekStart pos);
 
 int Resize(int fd, int newSize);
 
@@ -26,3 +26,5 @@ int WriteBytes(Inode* inode, int startByte, int numBytes, char* buf);
 int ReadBytes(Inode* inode, int startByte, int numBytes, char* buf);
 
 
+DirMgmt
+Get_Inode_Num(char *path, int* inodeNum);

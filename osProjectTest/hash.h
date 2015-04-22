@@ -2,8 +2,8 @@
  * Hash table header. Very simple implementation
  */
  
- #ifndef _HASH_H_
- #define _HASH_H_
+#ifndef _HASH_H_
+#define _HASH_H_
 #include "geekoscover.h"
 typedef struct Hashtable_s
 {
