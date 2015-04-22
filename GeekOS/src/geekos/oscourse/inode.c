@@ -1,6 +1,10 @@
 #include <geekos/oscourse/inode.h>
 #include <geekos/malloc.h>
+#include <geekos/synch.h>
+
 InodeManager inode_manager;
+struct Mutex inode_lock;
+struct Mutex inode_cache_lock;
 
 int Init_Inode_Manager() {
 		
@@ -20,8 +24,12 @@ int Init_Inode_Manager() {
 	inode_manager.last_free_inode = NULL;	
 	inode_manager.first_inode = NULL;
 	inode_manager.last_inode = NULL;
-	
+
 	int rc = Init_Inode_Cache();
+
+	Mutex_Init(&inode_lock);
+	Mutex_Init(&inode_cache_lock);
+
 	return rc;
 }
 
@@ -53,6 +61,7 @@ int Shut_Down_Inode_Manager()
 	
 int Free_Inode_Cache()
 {
+	Mutex_Lock(&inode_cache_lock);
 	CacheInode* cur = inode_manager.first_free_inode;
 	while(cur != NULL)
 	{
@@ -67,6 +76,7 @@ int Free_Inode_Cache()
 		Free(cur);
 		cur = next;
 	}
+	Mutex_Unlock(&inode_cache_lock);
 	return 0;
 }
 
@@ -89,7 +99,6 @@ int Allocate_Inode(int* freeInode) {
 	char* buf;
 	int i, j, rc = 0;
 	int flag = 0;
-	
 	// Loop to go over all bitmap blocks
 	for(i = 0; i < disk_superblock.numInodeBitmapBlocks && flag == 0; ++i)
 	{
@@ -141,6 +150,7 @@ int Allocate_Inode(int* freeInode) {
 
 /* Frees the given inode number by setting the corresponding bit in the bitmap to 0 */
 int Free_Inode(int inodeNo) {
+	Mutex_Lock(&inode_lock);
 	if(inodeNo > disk_superblock.numInodeBlocks * (BLOCK_SIZE /(int)sizeof(Inode)))
 	{
 		return -1;
@@ -165,6 +175,7 @@ int Free_Inode(int inodeNo) {
 	rc = rc | Set_Dirty(inodeBlockNo);
 	rc = rc | Unfix_From_Cache(inodeBlockNo);
 	rc = rc | Flush_Cache_Block(inodeBlockNo);
+	Mutex_Unlock(&inode_lock);
 	return rc;
 }
 
@@ -172,7 +183,7 @@ int Free_Inode(int inodeNo) {
 int Create_New_Inode(InodeMetaData meta_data, int* newInodeNo) {
 	Inode newInode;
 	newInode.meta_data = meta_data;
-	
+	Mutex_Lock(&inode_lock);
 	int rc = Allocate_Inode(newInodeNo);
 	
 	int blockNo = (*newInodeNo) / (BLOCK_SIZE /(int)sizeof(Inode)) + disk_superblock.firstInodeBlock;
@@ -185,6 +196,7 @@ int Create_New_Inode(InodeMetaData meta_data, int* newInodeNo) {
 	rc = rc | Set_Dirty(blockNo);
 	rc = rc | Unfix_From_Cache(blockNo);
 	rc = rc | Flush_Cache_Block(blockNo);
+	Mutex_Unlock(&inode_lock);
 	return rc;
 }
 
@@ -192,7 +204,7 @@ int Create_New_Inode(InodeMetaData meta_data, int* newInodeNo) {
 int Get_Inode_Into_Cache(int inodeNo, Inode** inode_buf)
 {
 	CacheInode *cache_inode;
-	   
+	Mutex_Lock(&inode_cache_lock);	   
 	int rc = Get_From_Hash_Table(&(inode_manager.cache_hash), inodeNo, (void**) &cache_inode);
 	   
 	if(rc == 0)
@@ -255,11 +267,13 @@ int Get_Inode_Into_Cache(int inodeNo, Inode** inode_buf)
 		(*inode_buf) = &(rep_page->inode);
 	}
 	cleanAndReturn:
+	Mutex_Unlock(&inode_cache_lock);
 	return rc;
 }
 
 int Unfix_Inode_From_Cache(int inodeNo)
 {
+	Mutex_Lock(&inode_cache_lock);
 	CacheInode* page;
 	int rc = Get_From_Hash_Table((&(inode_manager.cache_hash)), inodeNo, (void**)(&page));
 	if(rc) return rc;
@@ -273,6 +287,7 @@ int Unfix_Inode_From_Cache(int inodeNo)
 		Unlink_Inode_From_Cache(page);
 		Link_Inode_To_Free(page);
 	}
+	Mutex_Unlock(&inode_cache_lock);
 	return 0;
 }
 
@@ -280,6 +295,7 @@ int Unfix_Inode_From_Cache(int inodeNo)
 // Set page corresponding to inodeNo to dirty
 int Set_Inode_Dirty(int inodeNo)
 {
+	Mutex_Lock(&inode_cache_lock);
 	CacheInode* page;
 	int rc = Get_From_Hash_Table(&(inode_manager.cache_hash), inodeNo, (void**)(&page));
 	if(rc)
@@ -287,12 +303,14 @@ int Set_Inode_Dirty(int inodeNo)
 		 return rc;
 	}
 	page->dirty = 1;
+	Mutex_Unlock(&inode_cache_lock);
 	return 0;
 }
 
 // Flush cache and make all pages clean
 int Flush_Inode_Cache()
 {	
+	Mutex_Lock(&inode_cache_lock);
 	int i;
 	CacheInode* cur = inode_manager.first_inode;
 	int rc = 0;
@@ -307,15 +325,18 @@ int Flush_Inode_Cache()
 		rc = rc | Write_Inode_If_Dirty(cur);
 		cur = cur->next;
 	}
+	Mutex_Unlock(&inode_cache_lock);
 	return rc;
 }
 
 // Flush single page
 int Flush_Inode_Cache_Item(int inodeNo)
 {
+	Mutex_Lock(&inode_cache_lock);
 	CacheInode* page;
 	int rc = Get_From_Hash_Table(&(inode_manager.cache_hash), inodeNo, (void**)&page);
 	if(rc) return 0;
+	Mutex_Unlock(&inode_cache_lock);
 	return Write_Inode_If_Dirty(page);
 }
 	
