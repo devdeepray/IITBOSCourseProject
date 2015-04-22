@@ -3,6 +3,8 @@
  */
 
 #include <geekos/oscourse/hash.h>
+#include <geekos/malloc.h>
+#include <geekos/screen.h>
 
 int Compute_Hash(Hashtable *ht, int key)
 {
@@ -13,13 +15,23 @@ int Init_Hash_Table(Hashtable *ht, int size, int mult)
 {
 	ht->size = size;
 	ht->mult = mult;
-	ht->val_arr = (void**)Malloc(size);
-	ht->key_arr = (int*)Malloc(size);
+	ht->val_arr = (void**)Malloc(size * sizeof(void*));
+	ht->key_arr = (int*)Malloc(size * sizeof(int));
 	int i;
 	for(i = 0; i < size; ++i)
 	{
 		ht->key_arr[i] = -1;
 	}
+	return 0;
+}
+
+int Clear_Hash_Table(Hashtable *ht)
+{
+	Print("Free val");
+	Free(ht->val_arr);
+	Print("Free key");
+	Free(ht->key_arr);
+	Print("Done");
 	return 0;
 }
 

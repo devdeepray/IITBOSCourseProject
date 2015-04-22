@@ -28,12 +28,12 @@
 #include <geekos/signal.h>
 #include <geekos/sem.h>
 #include <geekos/projects.h>
-#include <geekos/virtualdisk.h>
+#include <geekos/oscourse/virtualdisk.h>
 
 #include <geekos/sys_net.h>
 #include <geekos/pipe.h>
 #include <geekos/mem.h>
-#include <geekos/oscourse/block.h>
+#include <geekos/oscourse/blocks.h>
 
 extern Spin_Lock_t kthreadLock;
 
@@ -985,12 +985,12 @@ static int Sys_Vir_Seek(struct Interrupt_State *state) {
 }
 
 static int Sys_Vir_Read(struct Interrupt_State *state) {
-	return Wait_For_Disk(state->ebx);
+	return 0;//Wait_For_Disk(state->ebx);
 }
 
 
 static int Sys_Vir_Write(struct Interrupt_State *state) {
-	return Wait_For_Disk(state->ebx);
+	return 0;//Wait_For_Disk(state->ebx);
 }
 
 static int Sys_Vir_Format(struct Interrupt_State *state) {

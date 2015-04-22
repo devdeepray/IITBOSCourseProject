@@ -24,7 +24,7 @@ struct DirEntry
 // inodeNum = -1 if file does not exist
 int existsFileName(Inode pwd, const char *fileName, int *inodeNum ,int *entryNum;)
 {
-	File *f = openFileInode(pwd);
+ 	int *f = Open(pwd);
 	DirHeader dhead;
 	int numread;
 	*inodeNum = -1;
