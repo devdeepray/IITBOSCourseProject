@@ -20,6 +20,7 @@ typedef struct InodeMetaData{
 
 	char filename[MAX_FILE_NAME_LENGTH];
 	   int group_id, owner_id, permissions, file_size;
+	   int is_directory;
 } InodeMetaData;
 
 typedef struct Inode{
@@ -40,11 +41,10 @@ typedef struct CacheInode{
 
 
 typedef struct InodeManager{
-	int bitmap_start_block,i_node_start_block;
-	int bitmap_number_of_blocks,i_node_number_of_blocks;
+	int bitmap_start_block,inode_start_block;
+	int bitmap_number_of_blocks,inode_number_of_blocks;
 	
 	
-	int max_bitmap_size;
 
 	CacheInode* first_free_inode;
 	CacheInode* last_free_inode;

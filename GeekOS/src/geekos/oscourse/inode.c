@@ -9,14 +9,9 @@ struct Mutex inode_cache_lock;
 int Init_Inode_Manager() {
 		
 	inode_manager.bitmap_start_block = disk_superblock.firstInodeBitmapBlock;
-	inode_manager.i_node_start_block = disk_superblock.firstInodeBlock;
+	inode_manager.inode_start_block = disk_superblock.firstInodeBlock;
 	inode_manager.bitmap_number_of_blocks = disk_superblock.numInodeBitmapBlocks;
-	inode_manager.i_node_number_of_blocks = disk_superblock.numInodeBlocks;
-	
-	inode_manager.max_bitmap_size = inode_manager.i_node_number_of_blocks/sizeof(Inode);
-	if (inode_manager.max_bitmap_size < inode_manager.bitmap_number_of_blocks*BLOCK_SIZE*(int)sizeof(char)) {
-		inode_manager.max_bitmap_size = inode_manager.bitmap_number_of_blocks*BLOCK_SIZE*(int)sizeof(char);
-	}
+	inode_manager.inode_number_of_blocks = disk_superblock.numInodeBlocks;
 	
 	
 	inode_manager.current_cache_size = 0;
@@ -478,9 +473,10 @@ int Allocate_Upto(int inodenum, int allocate_size)
 	Inode* inode;
 	int rc = Get_Inode_Into_Cache(inodenum, &inode);
 	if(rc) return rc;
-	// i_node should be fixed in the cache
+	// inode should be fixed in the cache
 	if(allocate_size <= (inode->meta_data).file_size)
 	{
+		Unfix_Inode_From_Cache(inodenum);
 		return -1;
 	}
 	int final_num_blocks = ((allocate_size - 1) / BLOCK_SIZE) + 1; // Final active number of blocks
@@ -499,7 +495,12 @@ int Allocate_Upto(int inodenum, int allocate_size)
 	current_num_blocks -= INODE_BASE_SIZE;
 	final_num_blocks -= INODE_BASE_SIZE;
 	
-	if(final_num_blocks <= 0) return rc; // Allocation done
+	if(final_num_blocks <= 0) {
+		inode->meta_data.file_size = allocate_size;
+		Set_Inode_Dirty(inodenum);
+		rc = Unfix_Inode_From_Cache(inodenum);
+		return rc; // Allocation done
+	}
 	
 	
 	// First level allocation
@@ -520,7 +521,12 @@ int Allocate_Upto(int inodenum, int allocate_size)
 	current_num_blocks -= BLOCK_SIZE /(int)sizeof(int);
 	final_num_blocks -= BLOCK_SIZE /(int)sizeof(int);
 	
-	if(final_num_blocks <= 0) return rc; // Allocation done
+	if(final_num_blocks <= 0) {
+		inode->meta_data.file_size = allocate_size;
+		Set_Inode_Dirty(inodenum);
+		rc = Unfix_Inode_From_Cache(inodenum);
+		return rc; // Allocation done
+	}
 	
 	// Second level allocation
 	if(orig_num_blocks <= INODE_BASE_SIZE + BLOCK_SIZE /(int)sizeof(int))
@@ -556,9 +562,15 @@ int Allocate_Upto(int inodenum, int allocate_size)
 		if(final_num_blocks <= 0)
 		{
 			rc = rc | Unfix_From_Cache(inode->d_nest_ptr);
+			inode->meta_data.file_size = allocate_size;
+			Set_Inode_Dirty(inodenum);
+			Unfix_Inode_From_Cache(inodenum);
 			return rc; // Allocation done
 		}
 	}
+	inode->meta_data.file_size = allocate_size;
+	Set_Inode_Dirty(inodenum);
+	rc = Unfix_Inode_From_Cache(inodenum);
 	return 0;
 }
 
@@ -603,9 +615,10 @@ int Truncate_From(int inodenum, int truncate_size)
 	Inode* inode;
 	int rc = Get_Inode_Into_Cache(inodenum, &inode);
 	if(rc) return rc;
-	// i_node should be fixed in the cache
+	// inode should be fixed in the cache
 	if(truncate_size >= (inode->meta_data).file_size)
 	{
+		Unfix_Inode_From_Cache(inodenum);
 		return -1;
 	}
 	int final_num_blocks = (((inode->meta_data).file_size - 1) / BLOCK_SIZE) + 1; // Final active number of blocks
@@ -622,7 +635,12 @@ int Truncate_From(int inodenum, int truncate_size)
 	current_num_blocks -= INODE_BASE_SIZE;
 	final_num_blocks -= INODE_BASE_SIZE;
 	
-	if(final_num_blocks <= 0) return rc; // Allocation done
+	if(final_num_blocks <= 0) {
+		inode->meta_data.file_size = truncate_size;
+		Set_Inode_Dirty(inodenum);
+		Unfix_Inode_From_Cache(inodenum);
+		return rc; // Allocation done
+	}
 	
 	
 	// First level allocation
@@ -644,7 +662,12 @@ int Truncate_From(int inodenum, int truncate_size)
 	current_num_blocks -= BLOCK_SIZE /(int)sizeof(int);
 	final_num_blocks -= BLOCK_SIZE /(int)sizeof(int);
 	
-	if(final_num_blocks <= 0) return rc; // Freeing done
+	if(final_num_blocks <= 0) {
+		inode->meta_data.file_size = truncate_size;
+		Set_Inode_Dirty(inodenum);
+		Unfix_Inode_From_Cache(inodenum);
+		return rc; // Freeing done
+	}
 	
 	// Second level allocation
 	
@@ -682,8 +705,14 @@ int Truncate_From(int inodenum, int truncate_size)
 			{
 				rc = rc | Free_Block((inode->d_nest_ptr));
 			}
+			inode->meta_data.file_size = truncate_size;
+			Set_Inode_Dirty(inodenum);
+			Unfix_Inode_From_Cache(inodenum);
 			return rc; // Allocation done
 		}
 	}
+	inode->meta_data.file_size = truncate_size;
+	Set_Inode_Dirty(inodenum);
+	Unfix_Inode_From_Cache(inodenum);
 	return 0;
 }

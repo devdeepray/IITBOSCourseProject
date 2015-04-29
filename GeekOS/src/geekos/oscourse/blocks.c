@@ -75,17 +75,17 @@ int Format_Disk() {
 	// Assumes sim_disk is initialized
 	int rc;
 	// Format and write superblock onto disk
-Enable_Interrupts();
+	Enable_Interrupts();
 	rc = Format_Super_Block();
-Disable_Interrupts();
+	Disable_Interrupts();
 	if (rc){
 		Print("blocks.c/Format_Disk: Could not format superblock\n");
 		return rc;
 	}
 	// Format the free list bitmap
-Enable_Interrupts();
+	Enable_Interrupts();
 	rc = Init_Free_List();
-Disable_Interrupts();
+	Disable_Interrupts();
 	if (rc)
 	{
 		Print("blocks.c/Format_Disk: Free list initialization failed\n");
@@ -187,7 +187,7 @@ int Format_Super_Block() {
 
 	disk_superblock.numInodeBitmapBlocks = 
 		(disk_superblock.numInodeBlocks * (disk_superblock.blockSizeInBytes 
-		/ sizeof(35))) / (8 * disk_superblock.blockSizeInBytes) + 1;
+		/ sizeof(Inode))) / (8 * disk_superblock.blockSizeInBytes) + 1;
 ;
 	disk_superblock.firstInodeBlock = 
 		disk_superblock.firstInodeBitmapBlock + disk_superblock.numInodeBitmapBlocks;

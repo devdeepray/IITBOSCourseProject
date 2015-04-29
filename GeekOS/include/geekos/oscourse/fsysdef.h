@@ -11,6 +11,16 @@
 #define MAX_PATH_LENGTH 200
 #define INODE_BASE_SIZE 12
 
+#define OFT_HASH_SIZE 1024
+#define OFT_HASH_MULT 1117
+
+#define LFT_HASH_SIZE 1024
+#define LFT_HASH_MULT 1117
+
+
+#define DISK_CACHE_SIZE 32
+#define DISK_CACHE_HASH_MULT 37
+
 #define MAX_CONFIG_FILE_SIZE 512
 #define DISK_CONFIG_FILE "/c/diskconf.txt"
 

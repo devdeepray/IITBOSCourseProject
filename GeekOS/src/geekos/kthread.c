@@ -121,6 +121,10 @@ static void Init_Thread(struct Kernel_Thread *kthread, void *stackPage,
     kthread->last_seeked->track = 0;
     kthread->last_seeked->block = 0;
 
+	/* Set default user and group ids */
+	kthread->user_id = 1;
+	kthread->group_id = 1;
+
     /*
      * The thread has an implicit self-reference.
      * If the thread is not detached, then its owner

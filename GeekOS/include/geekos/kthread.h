@@ -20,6 +20,7 @@
 
 #include <geekos/ktypes.h>
 #include <geekos/list.h>
+#include <geekos/oscourse/hash.h>
 
 
 struct Kernel_Thread;
@@ -69,6 +70,10 @@ struct Kernel_Thread {
     int affinity;               // prefered core = AFFINITY_ANY_CORE --> can run on any core
     int refCount;
     int detached;               // detached processes don't linger on Exit as zombies waiting for Wait to reap
+	int user_id;				// User id of the user
+	int group_id;				// Group id of the groups
+	Hashtable lft_hash;			// Hash for local file table
+	int fdCount;				// File descriptor count
 
     /* Last seek position */
     struct Seek_Pos* last_seeked;

@@ -163,7 +163,8 @@ geekos/blocks.o: ../src/geekos/oscourse/blocks.c /usr/include/stdc-predef.h \
  ../include/geekos/blockdev.h ../include/geekos/kthread.h \
  ../include/geekos/oscourse/diskcache.h ../include/geekos/oscourse/hash.h \
  ../include/geekos/oscourse/inode.h ../include/geekos/string.h \
- ../include/geekos/../libc/string.h ../include/geekos/synch.h
+ ../include/geekos/../libc/string.h ../include/geekos/synch.h \
+ ../include/geekos/int.h ../include/geekos/defs.h
 geekos/hash.o: ../src/geekos/oscourse/hash.c /usr/include/stdc-predef.h \
  ../include/geekos/oscourse/hash.h ../include/geekos/malloc.h \
  ../include/geekos/ktypes.h \
@@ -194,7 +195,8 @@ geekos/inode.o: ../src/geekos/oscourse/inode.c /usr/include/stdc-predef.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stddef.h \
  ../include/geekos/blockdev.h ../include/geekos/kthread.h \
  ../include/geekos/oscourse/diskcache.h ../include/geekos/string.h \
- ../include/geekos/../libc/string.h ../include/geekos/malloc.h
+ ../include/geekos/../libc/string.h ../include/geekos/malloc.h \
+ ../include/geekos/synch.h
 geekos/virtualdisk.o: ../src/geekos/oscourse/virtualdisk.c \
  /usr/include/stdc-predef.h ../include/geekos/kthread.h \
  ../include/geekos/ktypes.h \
@@ -208,6 +210,15 @@ geekos/virtualdisk.o: ../src/geekos/oscourse/virtualdisk.c \
  ../include/geekos/irq.h ../include/geekos/int.h ../include/geekos/defs.h \
  ../include/geekos/timer.h ../include/geekos/string.h \
  ../include/geekos/../libc/string.h ../include/geekos/synch.h
+geekos/oft.o: ../src/geekos/oscourse/oft.c /usr/include/stdc-predef.h \
+ ../include/geekos/oscourse/oft.h
+geekos/dirmgmt.o: ../src/geekos/oscourse/dirmgmt.c /usr/include/stdc-predef.h \
+ ../include/geekos/oscourse/dirmgmt.h ../include/geekos/string.h \
+ ../include/geekos/../libc/string.h \
+ /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stddef.h \
+ ../include/geekos/screen.h ../include/geekos/ktypes.h \
+ /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stdbool.h \
+ ../include/geekos/oscourse/fsysdef.h
 geekos/user.o: ../src/geekos/user.c /usr/include/stdc-predef.h \
  ../include/geekos/errno.h ../include/geekos/ktypes.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stdbool.h \
