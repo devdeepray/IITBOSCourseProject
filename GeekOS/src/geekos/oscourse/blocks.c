@@ -320,6 +320,7 @@ int Format_Inode_Blocks()
 	inode.meta_data.group_id = 1; // all
 	inode.meta_data.owner_id = 1; // root
 	inode.meta_data.permissions = 0177; // All can read, group and owner can write/exec
+	inode.meta_data.is_directory = 1;
 	inode.entries[0] = disk_superblock.rootDirectoryBlock;
 	buf[0] = 0x00;
 	memcpy(buf, &inode, sizeof(Inode));

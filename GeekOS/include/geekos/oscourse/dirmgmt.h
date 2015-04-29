@@ -1,14 +1,18 @@
+#ifndef _DIRMGMT_
+#define _DIRMGMT_
+
 #include <geekos/string.h>
 #include <geekos/screen.h>
 #include <geekos/oscourse/fsysdef.h>
+#include <geekos/oscourse/inode.h>
 
 typedef struct DirHeader
 {
-	unsigned int parentInode; // will point to parent directory
-	unsigned int numEntries; // number of entries in "t" block of the directory
+	int parentInode; // will point to parent directory
+	int numEntries; // number of entries in "t" block of the directory
 } DirHeader;
 
-struct DirEntry
+typedef struct DirEntry
 {
 	char fname[MAX_FILE_NAME_LENGTH];
 	int inode_num;
@@ -20,7 +24,6 @@ struct DirEntry
 // inodeNum = -1 if file does not exist
 
 
-int existsFileName(Inode* pwd, const char *fileName, int *inodeNum ,int *entryNum);
 
 
 typedef struct Path
@@ -33,6 +36,9 @@ typedef struct Path
 	char fname[MAX_FILE_NAME_LENGTH];
 	struct Path *childPath;// = NULL;
 } Path;
+
+
+int Exists_File_Name(Inode* pwd, const char *fileName, int *inodeNum ,int *entryNum);
 
 int Create_Path(char *path, Path *path_obj);
 
@@ -47,3 +53,5 @@ int Make_Dir(char* parentPath, char* fileName);
 int Remove_Dir_With_Inode(Inode *parentInode, char *fileName, int pinodeNum);//Assumption Only Empty Directories
 
 int Remove_Dir( char* parentPath, char* fileName);
+
+#endif //DIRMGMT

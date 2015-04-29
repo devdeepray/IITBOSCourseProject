@@ -67,7 +67,7 @@ int Get_File_Size_Lft(int fd, int *fileSize);
 
 int Init_Inode_Metadata(InodeMetaData *md, char* path);
 
-int My_Open(char* path, char op, int* fd);
+int My_Open(char* path,char* fname, char op, int* fd);
 
 int My_Close(int fd);
 

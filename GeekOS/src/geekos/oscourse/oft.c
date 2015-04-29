@@ -104,13 +104,13 @@ int Init_Local_Fcb(Local_Fcb *fcb, int inodeNo, char op, Inode *inode) {
 }
 
 int Get_Next_Fd(int *nextFd) {
-	void **dummy;
+	void *dummy;
 	while(1) {
-		if (Get_From_Hash_Table(&(CURRENT_THREAD->lft_hash), fdCount, dummy) == -1) {
-			*nextFd = fdCount;
+		if (Get_From_Hash_Table(&(CURRENT_THREAD->lft_hash), CURRENT_THREAD->fdCount, &dummy) == -1) {
+			*nextFd = CURRENT_THREAD->fdCount;
 			return 0;
 		}
-		fdCount++;
+		CURRENT_THREAD->fdCount++;
 	}
 	return -1;
 }
@@ -130,6 +130,13 @@ int Open_Lft(int inodeNo, char op, int *fd) {
 	{
 	    Print("oft.c/Open_Lft: Could not get inode into cache\n");
 	    return rc;
+	}
+	
+	if(inode->meta_data.is_directory)
+	{
+		Print("Is directory, cannot open directory\n");
+		Unfix_Inode_From_Cache(inodeNo);
+		return -1;
 	}
 	
 	// Check perms
@@ -283,35 +290,69 @@ int Init_Inode_Metadata(InodeMetaData *md, char* path) {
 	md->group_id = CURRENT_THREAD->group_id;
 	md->permissions = 0115; //Default OsX perms :P
 	md->file_size = 0;
+	md->is_directory = 0;
 	return 0;
 }
 
 int My_Open(char* path,char* fname, char op, int* fd) {
 	int inodeNo;
-	Inode *inode;
-	Path p;
-	Create_Path(path, &p);
-	int rc = Get_Inode_From_Path(p, &inodeNo);
-	//int rc = Get_Inode_Num(path, &inodeNo);
+	Inode *pwdInode;
+	Path pwd;
+	Create_Path(path, &pwd);
+	int rc = Get_Inode_From_Path(pwd, &inodeNo);
+	if(rc) return rc;
+	rc = Get_Inode_Into_Cache(inodeNo, &pwdInode);
 	if (rc == -1) {
-		Print("oft.c/My_Open: Could not get inode number.\n");
+		Print("oft.c/My_Open: Could not get pwd inode \n");
 		return -1;
 	}
-	if (inodeNo == -1) {
+	int fileInodeNum, entryNum;
+	
+	rc = Exists_File_Name(pwdInode, fname, &fileInodeNum, &entryNum);
+	
+	
+	if (rc) {
 		//File does not exist here
-		int inodeNo;
 		InodeMetaData new_metadata;
 		Init_Inode_Metadata(&new_metadata, path);
-		rc = Create_New_Inode(new_metadata, &inodeNo);
+		rc = Create_New_Inode(new_metadata, &fileInodeNum);
 		if(rc)
 		{
 			Print("Could not create inode for new file\n");
 			return rc;
 		}
-		My_ReadLow(
+		DirHeader dhead;
+		rc = My_ReadLow(pwdInode, (char*) &dhead, 0, sizeof(DirHeader));
+		if(rc) 
+		{
+			Unfix_Inode_From_Cache(inodeNo);
+			return rc;
+		}
+		dhead.numEntries++;
+		rc = My_WriteLow(pwdInode, (char*)&dhead, 0, sizeof(DirHeader));
+		if(rc) 
+		{
+			Unfix_Inode_From_Cache(inodeNo);
+			return rc;
+		}
+		rc = Allocate_Upto(inodeNo, sizeof(DirEntry) + pwdInode->meta_data.file_size);
+		if(rc)
+		{
+			Unfix_Inode_From_Cache(inodeNo);
+			return rc;
+		}
+		struct DirEntry dentry;
+		strcpy(dentry.fname, fname);
+		dentry.inode_num = fileInodeNum;
+		rc = My_WriteLow(pwdInode, (char*)&dentry, pwdInode->meta_data.file_size - sizeof(DirEntry), sizeof(DirEntry));
+		if(rc) 
+		{
+			Unfix_Inode_From_Cache(inodeNo);
+			return rc;
+		}
 	}
 	
-	rc = Open_Lft(inodeNo, op, fd);
+	rc = Open_Lft(fileInodeNum, op, fd);
 	if (rc) {
 		Print("oft.c/My_Open: Could not open file in lft.\n");
 		return -1;
@@ -571,7 +612,7 @@ int My_Write(int fd, const char* buf, int nbytes) {
 
 	if (nbytes == 0) return 0;
 	
-	if (curFcb->seekPos + nbytes > curFcb->inode->meta_data.fileSize) {
+	if (curFcb->seekPos + nbytes > curFcb->inode->meta_data.file_size) {
 		Print("oft.c/My_Write: Write goes beyond the size of the file.\n");
 		return -1;
 	}

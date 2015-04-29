@@ -1,4 +1,6 @@
 ﻿#include <geekos/oscourse/dirmgmt.h>
+#include <geekos/malloc.h>
+#include <geekos/oscourse/oft.h>
 
 // We assume we have two open functions
 // One opens file in some path, other opens file pointed to by the Inode
@@ -37,7 +39,8 @@ int Create_Path(char *path, Path *path_obj) {
 			tmpPath[next_slash] = tmpRep;        
 			index = next_slash;
 		}
-	}		
+	}
+	return 0;		
 }
 
 int Free_Path(Path *path_obj) {
@@ -67,17 +70,17 @@ int Exists_File_Name(Inode* pwd, const char *fileName, int *inodeNum ,int *entry
 	read += sizeof(dhead);
 	if(rc != 0)
 	{
-		Print("Exists_File_Name: Didn't work readLow\n");
+		Print("Exists_File_Name: Didn't work My_ReadLow\n");
 		return -1; 
 	}
 	while(curEntryNum + 1 < dhead.numEntries)
 	{
-		DirEntry tmp;
-		rc = readLow(pwd, &tmp, read, sizeof(tmp));
+		struct DirEntry tmp;
+		rc = My_ReadLow(pwd, (char*)&tmp, read, sizeof(tmp));
 		read += sizeof(tmp);
 		if(rc != 0)
 		{
-			Print("Exists_File_Name: Didn't work readLow after the 1st time\n");
+			Print("Exists_File_Name: Didn't work My_ReadLow after the 1st time\n");
 			return -1;
 		}
 		curEntryNum++;
@@ -136,10 +139,10 @@ int Get_Inode_From_Path(Path path, int* inode_num)
 			}
 			
 			curInodeNum = newInodeNum;
-			Get_Inode_Into_Cache(*curInodeNum, &curInode);
+			Get_Inode_Into_Cache(curInodeNum, &curInode);
 			if(Check_Perms('r', curInode) != 0) {
 				Print("Get_Inode_From_Path: Permission check failed \n");
-				Unfix_Inode_From_Cache(*inode_Num);
+				Unfix_Inode_From_Cache(curInodeNum);
 				return -1;
 			}
 			curPath = curPath->childPath;
@@ -161,14 +164,14 @@ int Make_Dir_With_Inode(Inode *parentInode, char* fileName, int pinodeNum)
 	// Basically creating a new file
 	int newInodeNum;
 	InodeMetaData meta_data;
-	strcpy(&meta_data.filename,fileName); // assuming filename is null terminated
+	strcpy((char*)(&meta_data.filename),fileName); // assuming filename is null terminated
 	meta_data.group_id = CURRENT_THREAD->group_id;
-	meta_data.user_id = CURRENT_THREAD->user_id;
+	meta_data.owner_id = CURRENT_THREAD->user_id;
 	meta_data.is_directory = 0x1;
 	meta_data.file_size = sizeof(DirHeader); // check if size of works
-	metaData.permissions = 0x7; //Set them permissions
-	metaData.permissions = metaData->permissions | (7 << 3);
-	metaData.permissions = metaData->permissions | (3 << 6);
+	meta_data.permissions = 0x7; //Set them permissions
+	meta_data.permissions = meta_data.permissions | (7 << 3);
+	meta_data.permissions = meta_data.permissions | (3 << 6);
 	rc = Create_New_Inode(meta_data, &newInodeNum);
 	if( rc != 0 ) {
 		Print("Create_New_Inode failed in Make_Dir oh No!\n");
@@ -179,7 +182,7 @@ int Make_Dir_With_Inode(Inode *parentInode, char* fileName, int pinodeNum)
 	// Update numEntries in the header
 	DirHeader dhead;
 	
-	rc = readLow(parentInode, &dhead, 0, sizeof(dhead));
+	rc = My_ReadLow(parentInode, (char*)&dhead, 0, sizeof(dhead));
 	
 	
 	if(rc != 0)
@@ -189,12 +192,12 @@ int Make_Dir_With_Inode(Inode *parentInode, char* fileName, int pinodeNum)
 		return -1;
 	}
 	dhead.numEntries++;	
-	writeLow(parentInode, &dhead, 0, sizeof(dhead));
+	My_WriteLow(parentInode, (char*)&dhead, 0, sizeof(dhead));
 	
 	
 	//Add new entry
 	DirEntry newEntry;
-	strcpy(&newEntry.fname,fileName); // assuming filename is null terminated
+	strcpy((char*)&newEntry.fname,fileName); // assuming filename is null terminated
 	newEntry.inode_num = newInodeNum;
 	int oldSize = (parentInode->meta_data).file_size;
 	rc = Allocate_Upto(pinodeNum , oldSize + sizeof(newEntry));
@@ -205,7 +208,7 @@ int Make_Dir_With_Inode(Inode *parentInode, char* fileName, int pinodeNum)
 		return rc;
 	}
 		
-	rc = writeLow(parentInode, &newEntry, oldSize, sizeof(newEntry));
+	rc = My_WriteLow(parentInode, (char*)&newEntry, oldSize, sizeof(newEntry));
 	return rc;
 }
 
@@ -233,7 +236,7 @@ int Make_Dir(char* parentPath, char* fileName)
 		Unfix_Inode_From_Cache(inodeNum);
 		return -1;
 	}
-	rc = Make_DirWithInode(parentInode,fileName, inodeNum);
+	rc = Make_Dir_With_Inode(parentInode,fileName, inodeNum);
 	if(rc)
 	{
 		Print("dirmgmt/Make_Dir: Couldnot make dir");
@@ -252,11 +255,7 @@ int Remove_Dir_With_Inode(Inode *parentInode, char *fileName, int pinodeNum)//As
     	Print("Remove_Dir:File Exists failed\n");
 		return -1;
 	}
-	if( inodeNum == -1)
-	{
-		Print("Remove_Dir: File Doesn't exist Code 122\n");
-		return -1;
-	}		    
+		    
 	
 	// TODO: If the file is a directory. We need to check whether the directory is actually empty
 	//if(inodeNum ) Check if the dir is empty
@@ -276,7 +275,7 @@ int Remove_Dir_With_Inode(Inode *parentInode, char *fileName, int pinodeNum)//As
 	
 	// Removing The Entry
 	DirHeader dhead;
-	rc = My_ReadLow(parentInode, &dhead, 0, sizeof(dhead));
+	rc = My_ReadLow(parentInode, (char*)&dhead, 0, sizeof(dhead));
 	
 	if(rc != 0)
 	{
@@ -285,18 +284,18 @@ int Remove_Dir_With_Inode(Inode *parentInode, char *fileName, int pinodeNum)//As
 		return -1;
 	}
 	dhead.numEntries--;
-	rc = My_WriteLow(parentInode, &dhead, 0, sizeof(dhead));
+	rc =  My_WriteLow(parentInode, (char*)&dhead, 0, sizeof(dhead));
 	
 	DirEntry lastEntry;
 	if(dhead.numEntries > 1)
 	{
-		rc = readLow(parentInode, &lastEntry, (dhead.numEntries)*sizeof(DirEntry), sizeof(DirEntry));
+		rc = My_ReadLow(parentInode, (char*)&lastEntry, (dhead.numEntries)*sizeof(DirEntry), sizeof(DirEntry));
 		int offset = sizeof(DirHeader) + entryNum*sizeof(DirEntry);
-		writeLow(parentInode, &lastEntry, offset, sizeof(DirEntry));
+		My_WriteLow(parentInode, (char*)&lastEntry, offset, sizeof(DirEntry));
 	}
 	
 	// remove the last entry in the file
-	rc = Truncate_From(sizeof(DirHeader) + dhead.numEntries*sizeof(DirEntry));
+	rc = Truncate_From(pinodeNum, sizeof(DirHeader) + dhead.numEntries*sizeof(DirEntry));
 	if(rc)
 	{
 		Print("remodeDir: Error while trucating directory\n");
@@ -330,7 +329,7 @@ int Remove_Dir( char* parentPath, char* fileName)
 		Unfix_Inode_From_Cache(inodeNum);
 		return -1;
 	}
-	rc = Remove_Dir(parentInode,fileName, inodeNum);
+	rc = Remove_Dir_With_Inode(parentInode,fileName, inodeNum);
 	rc = rc | Unfix_Inode_From_Cache(inodeNum);
 	if(rc)
 	{
