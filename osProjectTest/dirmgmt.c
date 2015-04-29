@@ -22,26 +22,40 @@ struct DirEntry
 // We assume we have two open functions
 // One opens file in some path, other opens file pointed to by the Inode
 // inodeNum = -1 if file does not exist
-int existsFileName(Inode pwd, const char *fileName, int *inodeNum ,int *entryNum;)
+
+
+int existsFileName(Inode* pwd, const char *fileName, int *inodeNum ,int *entryNum)
 {
- 	int *f = Open(pwd);
+	//int *f = Open(pwd);
 	DirHeader dhead;
-	int numread;
+	//int numread;
+	int rc;
 	*inodeNum = -1;
 	*entryNum = -1;
-	numread = readBytes(f, &dhead, sizeof(dhead));
-	if(numread < sizeof(dhead))
+	
+	//numread = readBytes(f, &dhead, sizeof(dhead));
+	int read = 0;
+	rc = readLow(pwd, &dhead, read, sizeof(dhead));
+	read += sizeof(dhead);
+	//if(numread < sizeof(dhead))
+	if(rc != 0)
 	{
-		closeFile(f);
+		printf("existsFileName: Didn't work readLow\n");
+		//closeFile(f);
 		return -1; // error
 	}
-	while(!feof(f))
+	//while(!feof(f))
+	while((*entryNum) + 1 < dhead.numEnteries)
 	{
 		DirEntry tmp;
-		numread = readBytes(f, &tmp, sizeof(tmp));
-		if(numread < sizeof(tmp))
+		//numread = readBytes(f, &tmp, sizeof(tmp));
+		rc = readLow(pwd, &tmp, read, sizeof(tmp));
+		read += sizeof(tmp);
+		//if(numread < sizeof(tmp))
+		if(rc != 0)
 		{
-			closeFile(f);
+			printf("existsFileName: Didn't work readLow after the 1st time\n");
+			//closeFile(f);
 			return -1; // error
 		}
 		*entryNum++;
@@ -51,7 +65,7 @@ int existsFileName(Inode pwd, const char *fileName, int *inodeNum ,int *entryNum
 			break;
 		}
 	}
-	closeFile(f);
+	//closeFile(f);
 	return 0;
 }
 
@@ -115,15 +129,23 @@ struct Path
 };
 
 
-int getInodeFromPath(Path path, Inode* inode)
+int getInodeFromPath(Path path, Inode** inode, int* inode_Num)
 {
 	if(path == NULL)
 	{
 		return -1;
 	}
+	int rc;
+	Inode* curInode;
+	*inode_Num = 0;
+	Get_Inode_Into_Cache(*inode_Num, &curInode);
+	if(Check_Perms('r', curInode) != 0) {
+		printf("getInodeFromPath: Permission check failed \n");
+		Unfix_Inode_From_Cache(*inode_Num);
+		return -1;
+	}
 
-	Inode curInode;
-	getRootInode(&curInode);
+	//getRootInode(&curInode);
 	Path* curPath = path.childPath;
 	while(true)
 	{
@@ -134,65 +156,107 @@ int getInodeFromPath(Path path, Inode* inode)
 		} 
 		else
 		{
-			int inodeNum;
+			int newInodeNum;
 			int entryNum; // Not Used Here
-			int rc = existsFileName(curInode, curPath->fname, &inodeNum, &entryNum);
-			if(rc != 0)
+			rc = existsFileName(curInode, curPath->fname, &newInodeNum, &entryNum);
+			Unfix_Inode_From_Cache(*inode_Num);
+			if(rc != 0)//on error inode** is garbage
 			{
+				if(curPath->childPath == NULL) {
+					//So it seems the file is not there. Send value to make a new one
+					return -256;
+				}
+				printf("getInodeFromPath:existsFileName failed (pain in existsFileName) \n");
 				return rc;
 			}
-			if(inodeNum < 0)
+			if(newInodeNum < 0)
 			{
+				printf("getInodeFromPath:existsFileName failed wrong newInodeNum \n");
 				return -1; // TODO errors
 			}
-			getInode(inodeNum, &curInode);
+			//Unfix_Inode_From_Cache(*inode_Num);
+			*inode_Num = newInodeNum;
+			Get_Inode_Into_Cache(*inode_Num, &curInode);
+			if(Check_Perms('r', curInode) != 0) {
+				printf("getInodeFromPath: Permission check failed \n");
+				Unfix_Inode_From_Cache(*inode_Num);
+				return -1;
+			}
+			//getInode(inodeNum, &curInode);
 			curPath = curPath->childPath;
 		}
 }
                 
-int makeDir( Inode parentInode, char* fileName)
+int makeDir(Inode *parentInode, char* fileName, int pinodeNum)
 {
 	// checking whether file already exists
 	int inodeNum;
 	int entryNum; // Not Used Here
 	int rc = existsFileName(parentInode, fileName, &inodeNum, &entryNum);
-	if( rc != 0) return rc;
-	if( inodeNum != -1) 
+	if( rc != 0) {
+		printf("makeDir: Error in existsFileName \n");
+		return rc;
+	}
+	if(inodeNum != -1) 
 	{
+		printf("makeDir: File Already exists code 122 \n");
+		return 122;
 		//Error file already exists
 		//TODO: return an appropriate code
 	}
 	
 	// Basically creating a new file
 	int newInodeNum;
-	rc = AllocInode(&newInodeNum); // The assumption is that the File Header will be made by this function
-	if( rc != 0 ) return rc;
-
+	InodeMetaData meta_data;
+	strcpy(&meta_data.filename,fileName); // assuming filename is null terminated
+	meta_data.group_id = CURRENT_THREAD->groupId;
+	meta_data.user_id = CURRENT_THREAD->userId;
+	meta_data.isDirectory = 1;
+	meta_data.file_size = sizeof(DirHeader); // check if size of works
+	metaData.permissions = 7; //Set them permissions
+	metaData.permissions = metaData->permissions | (7 << 3);
+	metaData.permissions = metaData->permissions | (3 << 6);
+	Create_New_Inode(meta_data, &newInodeNum);
+	if( rc != 0 ) {
+		printf("Create_New_Inode failed in makeDir oh No!\n");
+		return rc;
+	}
+	
 	// Append entry in the parent node and update numEntries
-	File *f = openFileInode(parentInode,'w');
+	//File *f = openFileInode(parentInode,'w');
+	
 	
 	// Update numEntries in the header
 	DirHeader dhead;
-	int numread;
-	numread = readBytes(f, &dhead, sizeof(dhead));
-	if( numread < sizeof(dhead) ) 
+	//int numread;
+	//numread = readBytes(f, &dhead, sizeof(dhead));
+	int read = 0;
+	rc = readLow(parentInode, &dhead, read, sizeof(dhead));
+	read += sizeof(dhead);
+	//if( numread < sizeof(dhead) )
+	if(rc != 0)
 	{
 		//Error
-		closeFile(f);
+		printf("MakeDir: reading inode failed\n");
 		return -1;
 	}
 	dhead.numEntries++;	
-	fseek(f,sizeof(dhead.parentInode),SEEK_SET);
-	fWrite(f,(char*)(&dhead.numEntries),sizeof(dhead.numEntries));
+	//fseek(f,sizeof(dhead.parentInode),SEEK_SET);
+	writeLow(parentInode, &dhead, 0, sizeof(dhead));
+
+	//fWrite(f,(char*)(&dhead.numEntries),sizeof(dhead.numEntries));
 	
 	//Add new entry
 	DirEntry newEntry;
 	strcpy(&newEntry.fname,fileName); // assuming filename is null terminated
 	newEntry.inode_num = newInodeNum;
-	fseek(f,0,SEEK_END); // seeking to the end of file
-	fWrite(f,(char*)newEntry,sizeof(DirEntry));
-	
-	closeFile(f);
+	//fseek(f,0,SEEK_END); // seeking to the end of file
+	//fWrite(f,(char*)newEntry,sizeof(DirEntry));
+	//Write
+	int oldSize = (parentInode->meta_data).file_size;
+	Allocate_Upto(pinodeNum , (parentInode->meta_data).file_size + sizeof(newEntry));
+	writeLow(parentInode, &newEntry, oldSize, sizeof(newEntry));
+	//closeFile(f);
 	return 0;
 }
 
@@ -200,64 +264,97 @@ int makeDir(char* parentPath, char* fileName)
 {
 	Path pPath(parentPath);
 	Inode parentInode;
-	int rc = getInodeFromPath(pPath,&parentInode);
+	int inodeNum;
+	int rc = getInodeFromPath(pPath,&parentInode, &inodeNum);
 	if( rc != 0)
 	{        
+		printf("makeDir: error or path doesn't exist\n");
+		return -1;
 		// Error, or parent path does not exist
 	}
-	rc = makeDir(parentInode,fileName);
+	if(Check_Perms('w', &parentInode) != 0) {
+				printf("makeDir: Permission check failed \n");
+				Unfix_Inode_From_Cache(*inodeNum);
+				return -1;
+	}
+	rc = makeDir(parentInode,fileName, inodeNum);
+	rc = rc | Set_Dirty(inodeNum);
+	rc = rc | Unfix_Inode_From_Cache(inodeNum);
 	return rc;
 } 
 
-
-int removeDir(Inode parentInode, char *fileName)
+int removeDir(Inode parentInode, char *fileName, int pinodeNum)//Assumption Only Empty Directories
 {
 	int inodeNum;
 	int entryNum;
     int rc = existsFileName(parentInode,fileName,&inodeNum,&entryNum);
     if( rc != 0)
     {
+    	printf("removeDir:File Exists failed\n");
 		// Error
 		return rc;
 	}
 	if( inodeNum == -1)
 	{
+		printf("removeDir: File Doesn't exist Code 122\n");
+		// Error
+		return 122;
 		//File does not exist. Error
 	}		    
 	
 	// TODO: If the file is a directory. We need to check whether the directory is actually empty
-	
-	DeAlloc(inodeNum);
-	
+	//if(inodeNum ) Check if the dir is empty
+	Inode delInode;
+	Get_Inode_Into_Cache(inodeNum, &delInode);
+	if((!(delInode.meta_data).isDirectory) || (delInode.meta_data).file_size != sizeof(DirHeader)){
+		rc = 32;
+		return rc;
+	}
+	Free_Inode(inodeNum);
 	// Updating numEntries
-	File *f = openFileInode(parentInode);
-	DirHeader dhead;
-	int numread;
-	numread = readBytes(f, &dhead, sizeof(dhead));
-	if(numread < sizeof(dhead))
-	{
+	//File *f = openFileInode(parentInode);
+	//DirHeader dhead;
+	//int numread;
+	//numread = readBytes(f, &dhead, sizeof(dhead));
+	//if(numread < sizeof(dhead))
+	/*{
 		closeFile(f);
 		return -1;
 	}	
 	dhead.numEntries--;	
 	fseek(f,sizeof(dhead.parentInode),SEEK_SET);
 	fWrite(f,(char*)(&dhead.numEntries),sizeof(dhead.numEntries));
-	
+	*/
 	// Removing The Entry
+	DirHeader dhead;
+	int read = 0;
+	rc = readLow(parentInode, &dhead, read, sizeof(dhead));
+	read += sizeof(dhead);
+	if(rc != 0)
+	{
+		//Error
+		printf("MakeDir: reading inode failed\n");
+		return -1;
+	}
+	dhead.numEntries--;	
+	
 	DirEntry lastEntry;
 	if(dhead.numEntries > 1)
 	{
-		fseek(f,(dhead.numEntries-1)*sizeof(lastEntry),SEEK_CUR);
-		numread = readBytes(f, &lastEntry, sizeof(lastEntry));
+		//fseek(f,(dhead.numEntries-1)*sizeof(lastEntry),SEEK_CUR);
+		//numread = readBytes(f, &lastEntry, sizeof(lastEntry));
+		//numEnteries has already been reduced
+		rc = readLow(parentInode, &lastEntry, (dhead.numEntries)*sizeof(lastEntry), sizeof(lastEntry));
 		int offset = sizeof(dhead) + entryNum*sizeof(lastEntry);
-		fseek(f,offset,SEEK_SET);
-		fWrite(f,(char*)(&lastEntry),sizeof(lastEntry));	
+		writeLow(parentInode, &lastEntry, offset, sizeof(lastEntry));
+		//fseek(f,offset,SEEK_SET);
+		//fWrite(f,(char*)(&lastEntry),sizeof(lastEntry));	
 	}	
 	
 	// remove the last entry in the file
-	ftruncate(sizeof(lastEntry));
+	Truncate_From(sizeof(lastEntry));
 	
-	closeFile(f);
+	//closeFile(f);
 	return 0;
 }
 
@@ -265,11 +362,21 @@ int removeDir( char* parentPath, char* fileName)
 {
 	Path pPath(parentPath);
 	Inode parentInode;
-	int rc = getInodeFromPath(pPath,&parentInode);
-	if( rc != 0)
+	int inodeNum;
+	int rc = getInodeFromPath(pPath, &parentInode, &inodeNum);
+	if(rc != 0)
 	{        
+		printf("removeDir: Path Doesn't Exist! \n");
+		return rc;
 		// Error, or parent path does not exist
 	}
-	rc = removeDir(parentInode,fileName);
+	if(Check_Perms('w', &parentInode) != 0) {
+				printf("removeDir: Permission check failed \n");
+				Unfix_Inode_From_Cache(*inodeNum);
+				return -1;
+	}
+	rc = removeDir(parentInode,fileName, inodeNum);
+	rc = rc | Set_Dirty(inodeNum);
+	rc = rc | Unfix_Inode_From_Cache(inodeNum);
 	return rc;
 }

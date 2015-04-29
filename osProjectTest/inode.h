@@ -20,7 +20,7 @@
 typedef struct InodeMetaData{
 
 	char filename[MAX_FILE_NAME_LENGTH];
-	unsigned int group_id, owner_id, permissions, file_size;
+	unsigned int group_id, owner_id, permissions, file_size, isDirectory;
 } InodeMetaData;
 
 typedef struct Inode{

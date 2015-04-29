@@ -464,7 +464,6 @@ int Allocate_Upto(int inodenum, int allocate_size)
 	int final_num_blocks = ((allocate_size - 1) / BLOCK_SIZE) + 1; // Final active number of blocks
 	int current_num_blocks = (((inode->meta_data).file_size - 1) / BLOCK_SIZE) + 1; // Currently active number of blocks
 	int orig_num_blocks = current_num_blocks; // Originally active number of blocks
-	
 	rc = 0;
 	// Base ptr allocation
 	for(; current_num_blocks < final_num_blocks &&  current_num_blocks < INODE_BASE_SIZE; ++current_num_blocks)
@@ -477,7 +476,10 @@ int Allocate_Upto(int inodenum, int allocate_size)
 	current_num_blocks -= INODE_BASE_SIZE;
 	final_num_blocks -= INODE_BASE_SIZE;
 	
-	if(final_num_blocks <= 0) return rc; // Allocation done
+	if(final_num_blocks <= 0) {
+		(inode->meta_data).file_size = allocate_size;
+		return rc; // Allocation done
+	}
 	
 	
 	// First level allocation
@@ -498,7 +500,10 @@ int Allocate_Upto(int inodenum, int allocate_size)
 	current_num_blocks -= BLOCK_SIZE / sizeof(int);
 	final_num_blocks -= BLOCK_SIZE / sizeof(int);
 	
-	if(final_num_blocks <= 0) return rc; // Allocation done
+	if(final_num_blocks <= 0) {
+		(inode->meta_data).file_size = allocate_size;
+		return rc; //Allocation data
+	} 
 	
 	// Second level allocation
 	if(orig_num_blocks <= INODE_BASE_SIZE + BLOCK_SIZE / sizeof(int))
@@ -534,9 +539,11 @@ int Allocate_Upto(int inodenum, int allocate_size)
 		if(final_num_blocks <= 0)
 		{
 			rc = rc | Unfix_From_Cache(inode->d_nest_ptr);
+			(inode->meta_data).file_size = allocate_size;
 			return rc; // Allocation done
 		}
 	}
+	(inode->meta_data).file_size = allocate_size;
 	return 0;
 }
 
@@ -600,7 +607,10 @@ int Truncate_From(int inodenum, int truncate_size)
 	current_num_blocks -= INODE_BASE_SIZE;
 	final_num_blocks -= INODE_BASE_SIZE;
 	
-	if(final_num_blocks <= 0) return rc; // Allocation done
+	if(final_num_blocks <= 0) {
+		(inode->meta_data).file_size -= truncate_size;
+		return rc; // Allocation done
+	}
 	
 	
 	// First level allocation
@@ -622,8 +632,10 @@ int Truncate_From(int inodenum, int truncate_size)
 	current_num_blocks -= BLOCK_SIZE / sizeof(int);
 	final_num_blocks -= BLOCK_SIZE / sizeof(int);
 	
-	if(final_num_blocks <= 0) return rc; // Freeing done
-	
+	if(final_num_blocks <= 0) {
+		(inode->meta_data).file_size -= truncate_size;
+		return rc; // Freeing done
+	}
 	// Second level allocation
 	
 	
@@ -660,8 +672,10 @@ int Truncate_From(int inodenum, int truncate_size)
 			{
 				rc = rc | Free_Block((inode->d_nest_ptr));
 			}
+			(inode->meta_data).file_size -= truncate_size;
 			return rc; // Allocation done
 		}
 	}
+	(inode->meta_data).file_size -= truncate_size;
 	return 0;
 }

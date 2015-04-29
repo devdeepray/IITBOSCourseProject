@@ -4,7 +4,7 @@
 
 int main()
 {
-	int rc = Init_File_System();\
+	int rc = Init_File_System();
 	fflush(stdout);
 	printf("Format?\n");
 	fflush(stdout);
