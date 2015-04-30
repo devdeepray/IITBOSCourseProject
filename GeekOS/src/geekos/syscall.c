@@ -29,6 +29,7 @@
 #include <geekos/sem.h>
 #include <geekos/projects.h>
 #include <geekos/oscourse/virtualdisk.h>
+#include <geekos/oscourse/oft.h>
 
 #include <geekos/sys_net.h>
 #include <geekos/pipe.h>
@@ -994,7 +995,113 @@ static int Sys_Vir_Write(struct Interrupt_State *state) {
 }
 
 static int Sys_Vir_Format(struct Interrupt_State *state) {
-    return Format_Disk();
+	Enable_Interrupts();
+    int x = Format_Disk();
+    Disable_Interrupts();
+    return x;
+}
+
+static int Sys_Vir_File_Open(struct Interrupt_State *state) {
+	
+	char path[MAX_PATH_LENGTH], fname[MAX_FILE_NAME_LENGTH];
+	int fd;
+	Copy_From_User((void*)path, (ulong_t)state->ebx, (ulong_t)MAX_PATH_LENGTH);
+	Copy_From_User((void*)fname, (ulong_t)state->ecx, (ulong_t)MAX_FILE_NAME_LENGTH);
+	Enable_Interrupts();
+	int x = My_Open(path, fname, state->edx, &fd);
+	Disable_Interrupts();
+	Copy_To_User((ulong_t)state->esi, (void*)&fd, (ulong_t)(sizeof(int)));
+	
+	return x;
+}
+
+static int Sys_Vir_File_Read(struct Interrupt_State *state) {
+	Enable_Interrupts();
+	char *buf = (char*)Malloc(state->edx);
+	int x = My_Read(state->ebx, buf, state->edx);
+	Copy_To_User((ulong_t)(state->ecx), (void*)buf, state->edx);
+	Free(buf);
+	Disable_Interrupts();
+	return x;
+}
+
+static int Sys_Vir_File_Write(struct Interrupt_State *state) {
+	Enable_Interrupts();
+	char *buf = (char*)Malloc(state->edx);
+	Copy_From_User((void*)buf, (ulong_t)state->ecx, state->edx);
+	int x =  My_Write(state->ebx, buf, state->edx);
+	Free(buf);
+	Disable_Interrupts();
+	return x;
+}
+
+static int Sys_Vir_File_Seek(struct Interrupt_State *state) {
+	Enable_Interrupts();
+	int x =  My_Seek(state->ebx, state->ecx, state->edx);
+	Disable_Interrupts();
+	return x;
+}
+
+static int Sys_Vir_File_Resize(struct Interrupt_State *state) {
+	Enable_Interrupts();
+	int x =  My_Resize(state->ebx,state->ecx);
+	Disable_Interrupts();
+	return x;
+}
+
+static int Sys_Vir_File_Close(struct Interrupt_State *state) {
+	Enable_Interrupts();
+	int x =  My_Close(state->ebx);
+	Disable_Interrupts();
+	return x;
+}
+
+static int Sys_Vir_File_Mkdir(struct Interrupt_State *state) {
+	
+	char path[MAX_PATH_LENGTH], fname[MAX_FILE_NAME_LENGTH];
+
+	Copy_From_User((void*)path, (ulong_t)state->ebx, (ulong_t)MAX_PATH_LENGTH);
+	Copy_From_User((void*)fname, (ulong_t)state->ecx, (ulong_t)MAX_FILE_NAME_LENGTH);
+	Enable_Interrupts();
+	int x = Make_Dir(path, fname);
+	Disable_Interrupts();
+	
+	return x;
+}
+
+static int Sys_Vir_File_Del(struct Interrupt_State *state) {
+	
+	char path[MAX_PATH_LENGTH], fname[MAX_FILE_NAME_LENGTH];
+	Copy_From_User((void*)path, (ulong_t)state->ebx, (ulong_t)MAX_PATH_LENGTH);
+	Copy_From_User((void*)fname, (ulong_t)state->ecx, (ulong_t)MAX_FILE_NAME_LENGTH);
+	Enable_Interrupts();
+	int x = Remove_Dir(path, fname);
+	Disable_Interrupts();
+	return x;
+}
+
+
+static int Sys_Vir_Count_Accesses(struct Interrupt_State *stat) {
+	Enable_Interrupts();
+	Print("Number of disk accesses: %d", CURRENT_THREAD->num_disk_accesses);
+	Disable_Interrupts();
+	return 0;
+}
+
+
+static int Sys_Get_Into_Cache(struct Interrupt_State *stat) {
+	char* buf;
+	Enable_Interrupts();
+	Get_Into_Cache(stat->ebx,&buf);
+	Disable_Interrupts();
+	return 0;
+}
+static int Sys_Unfix_From_Cache(struct Interrupt_State *stat) {
+	char* buf;
+	Enable_Interrupts();
+	Unfix_From_Cache(stat->ebx);
+	Disable_Interrupts();
+	return 0;
 }
 
 /*
@@ -1093,7 +1200,19 @@ const Syscall g_syscallTable[] = {
     Sys_Vir_Seek,
     Sys_Vir_Read,
     Sys_Vir_Write,
-    Sys_Vir_Format
+    Sys_Vir_Format,
+    /* syscalls for file manip on virtual fs */
+    Sys_Vir_File_Open,
+    Sys_Vir_File_Read,
+    Sys_Vir_File_Write,
+    Sys_Vir_File_Seek,
+    Sys_Vir_File_Resize,
+    Sys_Vir_File_Close,
+    Sys_Vir_File_Mkdir,
+    Sys_Vir_File_Del,
+    Sys_Vir_Count_Accesses,
+    Sys_Get_Into_Cache,
+    Sys_Unfix_From_Cache    
 };
 
 /*

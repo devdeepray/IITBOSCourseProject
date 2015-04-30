@@ -56,6 +56,8 @@ typedef struct InodeManager{
 	
 } InodeManager;
 
+extern InodeManager inode_manager;
+
 // Cache functions
 int Init_Inode_Cache();
 

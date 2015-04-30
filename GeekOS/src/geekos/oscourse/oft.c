@@ -1,23 +1,33 @@
 #include <geekos/oscourse/oft.h>
+#include <geekos/oscourse/inode.h>
 
 Hashtable oft_hash;
 
+
+
 // Checks permissions for op allowed
-int Check_Perms(char op, Inode *buf) {
+int Check_Perms(int op, Inode *buf) {
+	//~ Print("Entering check_perms\n");
 	InodeMetaData metaData = buf->meta_data;
 
     //XXX Badal dalo
-	int ownerPerm = metaData.permissions % 8;
-	int groupPerm = (metaData.permissions / 8) % 8;
-	int publicPerm = ((metaData.permissions / 8) / 8) % 8;
-	
+	int ownerPerm = metaData.permissions & 07;
+	int groupPerm = (metaData.permissions & 070) >> 3;
+	int publicPerm = (metaData.permissions & 0700) >> 6;
+	//~ Print("%d %d %d\n", ownerPerm, groupPerm, publicPerm);
+	//~ Print("op %d\n", op);
 	// Check public perms
-	if (op == 'r') {
-		if (publicPerm >= 1) return 0;
+	if (op == 1) { // Read
+		//~ Print("Camer here as well\n");
+		if (publicPerm >= 1) {
+			//~ Print("check perms \n");
+			return 0;
+		}
 		if (CURRENT_THREAD->group_id == metaData.group_id && groupPerm >= 1) return 0;
 		if (CURRENT_THREAD->user_id == metaData.owner_id && ownerPerm >= 1) return 0;
 	}
-	else if (op == 'w' || op == 'a') {
+	else if (op == 2 || op == 3) { // Write/append
+		//~ Print("Came here\n");
 		if (publicPerm >= 3) return 0;
 		if (CURRENT_THREAD->group_id == metaData.group_id && groupPerm >= 3) return 0;
 		if (CURRENT_THREAD->user_id == metaData.owner_id && ownerPerm >= 3) return 0;
@@ -27,8 +37,9 @@ int Check_Perms(char op, Inode *buf) {
 }
 
 // Creates a new Global_Fcb if it does not exist. Otherwise updates existing fcb
-int Open_Oft(int inodeNo, char op) {
-    Print("Adding global fcb\n");
+int Open_Oft(int inodeNo, int op) {
+	//~ Print("Entering open_oft\n");
+    //~ Print("Adding global fcb\n");
 	Global_Fcb *curFcb;
 	
 	// Need to create new fcb, get the inode into cache, set the inode pointer in curFcb
@@ -43,7 +54,7 @@ int Open_Oft(int inodeNo, char op) {
 
 	// Check permissions, update info
 
-	if (op == 'w' || op == 'a') {
+	if (op == 2 || op == 3) {
 		if (curFcb->isWriting) {
 		    Print("SOMETHING ELSE ALREADY WRITING");
 			return -1;
@@ -53,12 +64,12 @@ int Open_Oft(int inodeNo, char op) {
 		}
 	}
 	curFcb->numReading++;
-	Print("Added global FCB\n");
+	//~ Print("Added global FCB\n");
 	return 0;
 }
 
-int Close_Oft(int inodeNo, char op) {
-    Print("Closing globally\n");
+int Close_Oft(int inodeNo, int op) {
+    //~ Print("Closing globally\n");
 	//Present in OFT
 	Global_Fcb *curFcb;
 	if (Get_From_Hash_Table(&oft_hash, inodeNo, (void**)&curFcb) == -1) {
@@ -67,10 +78,10 @@ int Close_Oft(int inodeNo, char op) {
 	}
 
 	// Check op, update info
-	if (op == 'r') {
+	if (op == 1) {
 		curFcb->numReading--;
 	}
-	else if (op == 'w' || op == 'a') {
+	else if (op == 2 || op == 3) {
 		curFcb->isWriting = 0;
 		curFcb->numReading--;
 	}
@@ -80,13 +91,13 @@ int Close_Oft(int inodeNo, char op) {
 		Remove_From_Hash_Table(&oft_hash, inodeNo);
 		Free(curFcb);
 	}
-	Print("Closed globally\n");
+	//Print("Closed globally\n");
 	return 0;
 }
 
 // Initialize OFT structures
 int Init_Oft() {
-    Print("Initializing OFT table\n");
+    //~ Print("Initializing OFT table\n");
 	Init_Hash_Table(&oft_hash, OFT_HASH_SIZE, OFT_HASH_MULT);
     Print("Initialized OFT table\n");
 	return 0;
@@ -95,7 +106,8 @@ int Init_Oft() {
 /*************************************************************************************************/
 
 
-int Init_Local_Fcb(Local_Fcb *fcb, int inodeNo, char op, Inode *inode) {
+int Init_Local_Fcb(Local_Fcb *fcb, int inodeNo, int op, Inode *inode) {
+	//~ Print("Entering init_local_fcb\n");
 	fcb->seekPos = 0;
 	fcb->intendedOp = op;
 	fcb->inodeNo = inodeNo;
@@ -104,6 +116,7 @@ int Init_Local_Fcb(Local_Fcb *fcb, int inodeNo, char op, Inode *inode) {
 }
 
 int Get_Next_Fd(int *nextFd) {
+	//~ Print("Entering get_next_fd\n");
 	void *dummy;
 	while(1) {
 		if (Get_From_Hash_Table(&(CURRENT_THREAD->lft_hash), CURRENT_THREAD->fdCount, &dummy) == -1) {
@@ -116,14 +129,14 @@ int Get_Next_Fd(int *nextFd) {
 }
 
 /// Call from kthread init
-int Init_Lft() {	
-	Init_Hash_Table(&(CURRENT_THREAD->lft_hash), LFT_HASH_SIZE, LFT_HASH_MULT);
-	CURRENT_THREAD->fdCount = 0;
+int Init_Lft(struct Kernel_Thread *kthread) {	
+	Init_Hash_Table(&(kthread->lft_hash), LFT_HASH_SIZE, LFT_HASH_MULT);
+	kthread->fdCount = 0;
 	return 0;
 }
 
-int Open_Lft(int inodeNo, char op, int *fd) {
-    Print("Opening in local file table\n");
+int Open_Lft(int inodeNo, int op, int *fd) {
+    //~ Print("Opening in local file table\n");
 	Inode *inode;
 	int rc = Get_Inode_Into_Cache(inodeNo, &inode);
 	if(rc)
@@ -140,6 +153,7 @@ int Open_Lft(int inodeNo, char op, int *fd) {
 	}
 	
 	// Check perms
+	//~ Print("Open lft op is %d\n", op);
     rc = Check_Perms(op, inode);
     rc = rc | Open_Oft(inodeNo, op);
 	
@@ -212,7 +226,7 @@ int Resize_Lft(int fd, int newSize) {
 		return -1;	
 	}
 	
-	if (!(curFcb->intendedOp == 'w' || curFcb->intendedOp == 'a')) {
+	if (!(curFcb->intendedOp == 2 || curFcb->intendedOp == 3)) {
 		Print("oft.c/Resize_Lft: File was not opened with resizing permissions.");
 		return -1;
 	}
@@ -245,6 +259,7 @@ int Close_Lft(int fileDes)
 		Print("ift.c/Close_Lft: FILE WAS NEVER OPENED.");
 		return -1; 
 	}
+	
 	int rc = Close_Oft(curFcb->inodeNo, curFcb->intendedOp);
 	if (rc) {
 		Print("oft.c/Close_Lft: Could not close file in oft.");
@@ -277,15 +292,8 @@ int Get_File_Size_Lft(int fd, int *fileSize) {
 
 /************************************************************************************************/
 
-int Init_Inode_Metadata(InodeMetaData *md, char* path) {
-	if (!path) return -1;
-	Path new_path;
-	Create_Path(path, &new_path);
-	Path* cur_path = &new_path;
-	while (cur_path->childPath != NULL) {
-		cur_path = cur_path->childPath;
-	}
-	strcpy(md->filename, cur_path->fname);
+int Init_Inode_Metadata(InodeMetaData *md, char* filename) {
+	strcpy(md->filename, filename);
 	md->owner_id = CURRENT_THREAD->user_id;
 	md->group_id = CURRENT_THREAD->group_id;
 	md->permissions = 0115; //Default OsX perms :P
@@ -294,28 +302,42 @@ int Init_Inode_Metadata(InodeMetaData *md, char* path) {
 	return 0;
 }
 
-int My_Open(char* path,char* fname, char op, int* fd) {
+int My_Open(char* path,char* fname, int op, int* fd) {
+	//~ Print("Myopen Op is %d\n", op);
+	//~ Print("Hash size in oft: %d", inode_manager.cache_hash.size);
+	//~ Print("Entering my_open\n");
 	int inodeNo;
 	Inode *pwdInode;
 	Path pwd;
 	Create_Path(path, &pwd);
+	//~ Print("Child is %d\n", (int)(pwd.childPath));
+	//~ Print("path created\n");
 	int rc = Get_Inode_From_Path(pwd, &inodeNo);
+	
+	//~ Print("Inode num %d\n", inodeNo);
+	//~ Print("get inode from path\n");
 	if(rc) return rc;
 	rc = Get_Inode_Into_Cache(inodeNo, &pwdInode);
+	//~ Print("Inodename", inodeNo);
+	Unfix_Inode_From_Cache(inodeNo);
+	Print("root name %s\n", pwdInode->meta_data.filename);
 	if (rc == -1) {
 		Print("oft.c/My_Open: Could not get pwd inode \n");
 		return -1;
 	}
+	
 	int fileInodeNum, entryNum;
-	
+	//~ Print("Myopen Op is %d\n", op);
 	rc = Exists_File_Name(pwdInode, fname, &fileInodeNum, &entryNum);
-	
-	
+	Print("rc is %d", rc);
+	//~ Print("Myopen Op is %d\n", op);
 	if (rc) {
+		//~ Print("HERE, NEWFILE %s\n", fname);
 		//File does not exist here
 		InodeMetaData new_metadata;
-		Init_Inode_Metadata(&new_metadata, path);
+		Init_Inode_Metadata(&new_metadata, fname);
 		rc = Create_New_Inode(new_metadata, &fileInodeNum);
+		
 		if(rc)
 		{
 			Print("Could not create inode for new file\n");
@@ -323,11 +345,12 @@ int My_Open(char* path,char* fname, char op, int* fd) {
 		}
 		DirHeader dhead;
 		rc = My_ReadLow(pwdInode, (char*) &dhead, 0, sizeof(DirHeader));
-		if(rc) 
+		if(rc)
 		{
 			Unfix_Inode_From_Cache(inodeNo);
 			return rc;
 		}
+		
 		dhead.numEntries++;
 		rc = My_WriteLow(pwdInode, (char*)&dhead, 0, sizeof(DirHeader));
 		if(rc) 
@@ -345,13 +368,14 @@ int My_Open(char* path,char* fname, char op, int* fd) {
 		strcpy(dentry.fname, fname);
 		dentry.inode_num = fileInodeNum;
 		rc = My_WriteLow(pwdInode, (char*)&dentry, pwdInode->meta_data.file_size - sizeof(DirEntry), sizeof(DirEntry));
+		
 		if(rc) 
 		{
 			Unfix_Inode_From_Cache(inodeNo);
 			return rc;
 		}
 	}
-	
+	//~ Print("Myopen Op is %d\n", op);
 	rc = Open_Lft(fileInodeNum, op, fd);
 	if (rc) {
 		Print("oft.c/My_Open: Could not open file in lft.\n");
@@ -382,6 +406,7 @@ int My_ReadLow(Inode* inode, char* buf, int seekPos, int nbytes) {
 
 	int blockNo;
 	int rc = Get_Block_For_Byte_Address(inode, seekPos, &blockNo);
+	//Print("Block addr %d\n", blockNo);
 	if (rc) {
 		Print("oft.c/My_ReadLow: Could not get block for byte address.");
 		return -1;
@@ -394,6 +419,7 @@ int My_ReadLow(Inode* inode, char* buf, int seekPos, int nbytes) {
 	}
 	
 	memcpy((void*)buf, (void*)(&curblock[(seekPos % BLOCK_SIZE)]), toReadFromFirst); 
+	//Print("buf: %s\n", buf);
 	Unfix_From_Cache(blockNo);
 	//Done reading from first block
 
@@ -466,51 +492,7 @@ int My_Read(int fd, char* buf, int nbytes) {
 
 	return My_ReadLow(curFcb->inode, buf, curFcb->seekPos, nbytes);
 
-	/*
-	int toReadMore = nbytes;
 
-	// Read from first block
-	int toReadFromFirst;
-	if (BLOCK_SIZE - (seekPos % BLOCK_SIZE) < nbytes) {
-	toReadFromFirst = BLOCK_SIZE - (seekPos % BLOCK_SIZE);
-	}
-	else {
-	toReadFromFirst = nbytes;
-	}
-
-	int blockNo;
-	Get_Block_For_Byte_Address(inode, seekPos, &blockNo);
-	char *curblock;
-	Get_Into_Cache(blockNo, &curblock);
-
-	memcpy((void*)buf, (void*)(&curblock[(seekPos % BLOCK_SIZE)]), toReadFromFirst); 
-	Unfix_From_Cache(blockNo);
-	//Done reading from first block
-
-	toReadMore -= toReadFromFirst;
-	if (toReadMore <= 0) {
-	return 0;
-	}
-
-	int firstByteToReadInBlock = seekPos + toReadFromFirst;
-	int numBlocksToRead = (toReadMore - 1) / BLOCK_SIZE + 1;
-	int bytesRead = toReadFromFirst;
-	int i;
-	for (i = 0; i < numBlocksToRead - 1; ++i) {
-	Get_Block_For_Byte_Address(inode, firstByteToReadInBlock, &blockNo);
-	Get_Into_Cache(blockNo, &curblock);
-	memcpy((void*)(&buf[bytesRead]), (void*)curblock, BLOCK_SIZE);
-	Unfix_From_Cache(blockNo);
-	bytesRead += BLOCK_SIZE;
-	firstByteToReadInBlock += BLOCK_SIZE;
-	toReadMore -= BLOCK_SIZE;
-	}
-
-	Get_Block_For_Byte_Address(inode, firstByteToReadInBlock, &blockNo);
-	Get_Into_Cache(blockNo, &curblock);
-	memcpy((void*)(&buf[bytesRead]), (void*)curblock, toReadMore);
-	Unfix_From_Cache(blockNo);
-	return 0;*/
 }
 
 int My_WriteLow(Inode* inode, const char* buf, int seekPos, int nbytes) {
@@ -526,6 +508,8 @@ int My_WriteLow(Inode* inode, const char* buf, int seekPos, int nbytes) {
 
 	int blockNo;
 	Get_Block_For_Byte_Address(inode, seekPos, &blockNo);
+	
+	Print("%d block\n", blockNo);
 	char *curblock;
 	Get_Into_Cache(blockNo, &curblock);
 
@@ -603,8 +587,10 @@ int My_WriteLow(Inode* inode, const char* buf, int seekPos, int nbytes) {
 }
 
 int My_Write(int fd, const char* buf, int nbytes) {
+	
 	Local_Fcb *curFcb;
 	int rc = Get_From_Hash_Table(&(CURRENT_THREAD->lft_hash), fd, (void**)&curFcb);
+	//~ Print("%d sk, %d nbytes\n", curFcb->seekPos, nbytes);
 	if (rc) {
 		Print("oft.c/My_Read: FILE WAS NEVER OPENED.\n");
 		return -1;
@@ -616,61 +602,14 @@ int My_Write(int fd, const char* buf, int nbytes) {
 		Print("oft.c/My_Write: Write goes beyond the size of the file.\n");
 		return -1;
 	}
-	if (!(curFcb->intendedOp == 'w' || curFcb->intendedOp == 'a')) {
+	if (!(curFcb->intendedOp == 2 || curFcb->intendedOp == 3)) {
 		Print("oft.c/My_Write: File was not opened for writing.\n");
 		return -1;
 	}
 
 	return My_WriteLow(curFcb->inode,buf, curFcb->seekPos, nbytes);
 
-	/*
-	int toWriteMore = nbytes;
-	// Write to first block
-	int toWriteToFirst;
-	if (BLOCK_SIZE - (seekPos % BLOCK_SIZE) < nbytes) {
-	toWriteToFirst = BLOCK_SIZE - (seekPos % BLOCK_SIZE);
-	}
-	else {
-	toWriteToFirst = nbytes;
-	}
-
-	int blockNo;
-	Get_Block_For_Byte_Address(inode, seekPos, &blockNo);
-	char *curblock;
-	Get_Into_Cache(blockNo, &curblock);
-
-	memcpy((void*)(&curblock[(seekPos % BLOCK_SIZE)]), (void*)buf, toWriteToFirst);
-	Set_Dirty(blockNo);
-	Unfix_From_Cache(blockNo);
-	//Done writing to first block
-
-	toWriteMore -= toWriteToFirst;
-	if (toWriteMore <= 0) {
-	return 0;
-	}
-
-	int firstByteToWriteInBlock = seekPos + toWriteToFirst;
-	int numBlocksToWriteTo = (toWriteMore - 1) / BLOCK_SIZE + 1;
-	int bytesWritten = toWriteToFirst;
-	int i;
-	for (i = 0; i < numBlocksToWriteTo - 1; ++i) {
-	Get_Block_For_Byte_Address(inode, firstByteToWriteInBlock, &blockNo);
-	Get_Into_Cache(blockNo, &curblock);
-	memcpy((void*)curblock, (void*)(&buf[bytesWritten]), BLOCK_SIZE);
-	Set_Dirty(blockNo);
-	Unfix_From_Cache(blockNo);
-	bytesWritten += BLOCK_SIZE;
-	firstByteToWriteInBlock += BLOCK_SIZE;
-	toWriteMore -= BLOCK_SIZE;
-	}
-
-	Get_Block_For_Byte_Address(inode, firstByteToWriteInBlock, &blockNo);
-	Get_Into_Cache(blockNo, &curblock);
-	memcpy((void*)curblock, (void*)(&buf[bytesWritten]), toWriteMore);
-	Set_Dirty(blockNo);
-	Unfix_From_Cache(blockNo);
-	return 0;
-	*/
+	
 }
 
 int My_Resize(int fd, int newSize) {

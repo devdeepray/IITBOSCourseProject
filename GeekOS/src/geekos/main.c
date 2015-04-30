@@ -51,6 +51,7 @@
 #include <geekos/smp.h>
 #include <geekos/io.h>
 #include <geekos/oscourse/virtualdisk.h>
+#include <geekos/oscourse/blocks.h>
 
 /*
  * Define this for a self-contained boot floppy
@@ -152,23 +153,23 @@ void Main(struct Boot_Info *bootInfo) {
 
     TODO_P(PROJECT_SOUND, "play startup sound");
     
-		Init_Sim_Disk();
-		
-		struct Kernel_Thread *duProcess[10];
-	int i;
-		for(i = 0; i < 3; ++i)
-		{
-			Spawn_Foreground(DISKTEST_PROGRAM, DISKTEST_PROGRAM, &duProcess[i]);
-		}
-		
-		for(i = 0;i < 3; ++i)
-		{
-			Join(duProcess[i]);
-		}
+		//~ Init_Sim_Disk();
+		Init_File_System();
+		//~ struct Kernel_Thread *duProcess[10];
+	//~ int i;
+		//~ for(i = 0; i < 3; ++i)
+		//~ {
+			//~ Spawn_Foreground(DISKTEST_PROGRAM, DISKTEST_PROGRAM, &duProcess[i]);
+		//~ }
+		//~ 
+		//~ for(i = 0;i < 3; ++i)
+		//~ {
+			//~ Join(duProcess[i]);
+		//~ }
 
     Spawn_Init_Process();
 
-
+	Shut_Down_File_System();
     /* it's time to shutdown the system */
     Hardware_Shutdown();
 

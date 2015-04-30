@@ -123,7 +123,7 @@ int Init_Sim_Disk() {
 		return -1;
 	}
 
-	Mutex_Init(&disk_lock);
+	//Mutex_Init(&disk_lock);
 	Print("Disk initialization done\n");
 	
 	return 0;
@@ -139,10 +139,13 @@ int Shut_Down_Sim_Disk()
 
 int Read_From_Disk(char *buf, int block_num, int n_blocks)
 {
-	Mutex_Lock(&disk_lock);
+	//Mutex_Lock(&disk_lock);
+	CURRENT_THREAD->num_disk_accesses++;
 	int rc = Seek(disk_file, block_num * disk_hw_data.bytes_per_block);
 	if(rc)
 	{
+		//~ Print("Block in disk file: %d\n", block_num );
+		//~ Print("Block size %d\n", disk_hw_data.bytes_per_block);
 		Print("virutaldisk.c/Read_From_Disk: Could not seek in disk.\n");
 		return rc;
 	}
@@ -152,13 +155,14 @@ int Read_From_Disk(char *buf, int block_num, int n_blocks)
 		Print("virutaldisk.c/Read_From_Disk: Could not read all blocks.\n");
 		return -1;
 	}
-	Mutex_Unlock(&disk_lock);
+	//Mutex_Unlock(&disk_lock);
 	return 0;
 }
 
 int Write_To_Disk(char* buf, int block_num, int n_blocks)
 {
-	Mutex_Lock(&disk_lock);
+	//Mutex_Lock(&disk_lock);
+	CURRENT_THREAD->num_disk_accesses++;
 	int rc = Seek(disk_file, block_num * disk_hw_data.bytes_per_block);
 	if(rc)
 	{
@@ -171,7 +175,7 @@ int Write_To_Disk(char* buf, int block_num, int n_blocks)
 		Print("virutaldisk.c/Write_To_Disk: Could not read all blocks.\n");
 		return -1;
 	}
-	Mutex_Unlock(&disk_lock);
+	//Mutex_Unlock(&disk_lock);
 	return 0;
 }
 

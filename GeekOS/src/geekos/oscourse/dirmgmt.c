@@ -7,16 +7,23 @@
 // inodeNum = -1 if file does not exist
 
 int Create_Path(char *path, Path *path_obj) {
+	Print("Entering create path\n");
 	path_obj->childPath = NULL;
+	
 	strcpy(path_obj->fname, "root");
+	
 	char tmpPath[MAX_PATH_LENGTH];
 	strcpy(tmpPath, path);
+	
 	Path* curNode = path_obj;
 	int index = 0;
 	while(true)
 	{
+		//~ Print("Ptr val %d path is %s\n", (int)(path_obj->childPath), path);
 		if(tmpPath[index] == '\0' || (tmpPath[index] == '/' && tmpPath[index +1 ] == '\0'))
 		{
+			//~ Print("Breaking\n");
+			
 			break;
 		}
 		else
@@ -68,6 +75,8 @@ int Exists_File_Name(Inode* pwd, const char *fileName, int *inodeNum ,int *entry
 	int read = 0;
 	rc = My_ReadLow(pwd, (char*)&dhead, read, sizeof(dhead));
 	read += sizeof(dhead);
+	//Print("Dehead attr %d %d\n", dhead.numEntries, dhead.parentInode);
+	//~ Print("PWD name %s\n", pwd->meta_data.filename);
 	if(rc != 0)
 	{
 		Print("Exists_File_Name: Didn't work My_ReadLow\n");
@@ -75,8 +84,10 @@ int Exists_File_Name(Inode* pwd, const char *fileName, int *inodeNum ,int *entry
 	}
 	while(curEntryNum + 1 < dhead.numEntries)
 	{
+		//Print("CHAP %d", read);
 		struct DirEntry tmp;
 		rc = My_ReadLow(pwd, (char*)&tmp, read, sizeof(tmp));
+		//~ Print("name read %s\n", tmp.fname);
 		read += sizeof(tmp);
 		if(rc != 0)
 		{
@@ -99,11 +110,14 @@ int Exists_File_Name(Inode* pwd, const char *fileName, int *inodeNum ,int *entry
 // If path does not exist: -1
 int Get_Inode_From_Path(Path path, int* inode_num)
 {
+	Print("entering inode from path\n");
 	int rc;
 	Inode* curInode;
-	int curInodeNum;
+	int curInodeNum = 0;
 	Get_Inode_Into_Cache(0, &curInode);
-	if(Check_Perms('r', curInode) != 0) {
+	//~ Print("perm %d\n", curInode->meta_data.permissions);
+	//~ Print("-1\n");
+	if(Check_Perms(1, curInode) != 0) {
 		Print("Get_Inode_From_Path: Permission check failed \n");
 		Unfix_Inode_From_Cache(0);
 		return -1;
@@ -113,15 +127,21 @@ int Get_Inode_From_Path(Path path, int* inode_num)
 	while(true)
 	{
 		
-		
+		//~ Print("0\n");
 		if(curPath == NULL)
 		{
+			//~ Print("1\n");
 			Unfix_Inode_From_Cache(curInodeNum);
+			//~ Print("2\n");
 			*(inode_num) = curInodeNum;
+			Print("inum %d\n", curInodeNum);
+			//~ Print("3\n");
+			//~ Print("%s %d\n", path.fname, (int)path.childPath);
 			return 0;
 		} 
 		else
 		{
+			Print("Here");
 			if(!(curInode->meta_data.is_directory))
 			{
 				Unfix_Inode_From_Cache(curInodeNum);
@@ -140,7 +160,7 @@ int Get_Inode_From_Path(Path path, int* inode_num)
 			
 			curInodeNum = newInodeNum;
 			Get_Inode_Into_Cache(curInodeNum, &curInode);
-			if(Check_Perms('r', curInode) != 0) {
+			if(Check_Perms(1, curInode) != 0) {
 				Print("Get_Inode_From_Path: Permission check failed \n");
 				Unfix_Inode_From_Cache(curInodeNum);
 				return -1;
@@ -156,8 +176,8 @@ int Make_Dir_With_Inode(Inode *parentInode, char* fileName, int pinodeNum)
 	int inodeNum;
 	int entryNum; // Not Used Here
 	int rc = Exists_File_Name(parentInode, fileName, &inodeNum, &entryNum);
-	if( rc != 0) {
-		Print("Make_Dir: Error in Exists_File_Name \n");
+	if( rc == 0) {
+		Print("Make_Dir: Dir/File already exists \n");
 		return rc;
 	}
 	
@@ -168,13 +188,31 @@ int Make_Dir_With_Inode(Inode *parentInode, char* fileName, int pinodeNum)
 	meta_data.group_id = CURRENT_THREAD->group_id;
 	meta_data.owner_id = CURRENT_THREAD->user_id;
 	meta_data.is_directory = 0x1;
-	meta_data.file_size = sizeof(DirHeader); // check if size of works
+	meta_data.file_size = 0; // check if size of works
 	meta_data.permissions = 0x7; //Set them permissions
 	meta_data.permissions = meta_data.permissions | (7 << 3);
 	meta_data.permissions = meta_data.permissions | (3 << 6);
 	rc = Create_New_Inode(meta_data, &newInodeNum);
 	if( rc != 0 ) {
 		Print("Create_New_Inode failed in Make_Dir oh No!\n");
+		return rc;
+	}
+	
+	DirHeader dheadnew;
+	Allocate_Upto(newInodeNum, sizeof(DirHeader));
+	dheadnew.parentInode = pinodeNum;
+	dheadnew.numEntries = 0;
+	
+	Inode* tmp;
+	rc = Get_Inode_Into_Cache(newInodeNum, &tmp);
+	
+	rc = My_WriteLow(tmp, (char*)&dheadnew, 0, sizeof(DirHeader)) | rc;
+
+	rc = rc | Unfix_Inode_From_Cache(newInodeNum);
+	Print("Put new header\n");
+	if(rc)
+	{
+		Print("Error putting new dir header\n");
 		return rc;
 	}
 	
@@ -231,7 +269,7 @@ int Make_Dir(char* parentPath, char* fileName)
 		Print("dirmgmt.c/Make_Dir: Couldnt get directory inode into cache\n");
 		return -1;
 	}
-	if(Check_Perms('w', parentInode) != 0) {
+	if(Check_Perms(2, parentInode) != 0) {
 		Print("Make_Dir: Permission check failed \n");
 		Unfix_Inode_From_Cache(inodeNum);
 		return -1;
@@ -261,7 +299,7 @@ int Remove_Dir_With_Inode(Inode *parentInode, char *fileName, int pinodeNum)//As
 	//if(inodeNum ) Check if the dir is empty
 	Inode *delInode;
 	rc = Get_Inode_Into_Cache(inodeNum, &delInode);
-	if(rc || (!(delInode->meta_data).is_directory) || (delInode->meta_data).file_size != sizeof(DirHeader)){
+	if(rc || (((delInode->meta_data).is_directory) && (delInode->meta_data).file_size != sizeof(DirHeader)) ){
 		Print("Remove_Dir: Not directory, or not empty or get into cache error\n");
 		return -1;
 	}
@@ -324,7 +362,7 @@ int Remove_Dir( char* parentPath, char* fileName)
 		Print("Remove_Dir: could not get inode into cache\n");
 		return rc;
 	}
-	if(Check_Perms('w', parentInode) != 0) {
+	if(Check_Perms(2, parentInode) != 0) {
 		Print("Remove_Dir: Permission check failed \n");
 		Unfix_Inode_From_Cache(inodeNum);
 		return -1;

@@ -35,6 +35,8 @@ int Read_Block(   int, char*);
 
 int Format_Disk();
 
+int Init_Root_Dir();
+
 int Init_File_System();
 
 int Shut_Down_File_System();

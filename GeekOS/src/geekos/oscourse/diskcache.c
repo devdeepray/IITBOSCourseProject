@@ -29,7 +29,7 @@ int Init_Disk_Cache()
 		return rc;
 	}
 	Print("Disk cache initialized.\n");
-	Mutex_Init(&cache_lock);
+	//Mutex_Init(&cache_lock);
 	return 0;
 }
 
@@ -62,7 +62,7 @@ int Shut_Down_Disk_Cache()
 
 int Free_Cache()
 {
-Mutex_Lock(&cache_lock);
+//Mutex_Lock(&cache_lock);
 	CachePage* cur = first_free_page;
 	while(cur != NULL)
 	{
@@ -77,7 +77,7 @@ Mutex_Lock(&cache_lock);
 		Free(cur);
 		cur = next;
 	}
-Mutex_Unlock(&cache_lock);
+//Mutex_Unlock(&cache_lock);
 	return 0;
 }
 
@@ -85,7 +85,7 @@ Mutex_Unlock(&cache_lock);
 // Gets a page into cache, or if it is there, icreases refcount
 int Get_Into_Cache(int blockNo, char** buf)
 {
-	Mutex_Lock(&cache_lock);
+	//Mutex_Lock(&cache_lock);
 	CachePage *page;
 	int rc = Get_From_Hash_Table(&cache_hash, blockNo, (void**) &page);
 	if(rc == 0)
@@ -120,6 +120,7 @@ int Get_Into_Cache(int blockNo, char** buf)
 			rep_page->next = NULL;
 			Link_To_Free(rep_page);
 			current_cache_size++;
+			Print("Cache Grown To %d\n",current_cache_size);
 		}
 		else // Cache size is max
 		{
@@ -145,20 +146,20 @@ int Get_Into_Cache(int blockNo, char** buf)
 		(*buf) = rep_page->buf;
 	}
 	cleanAndReturn:
-	Mutex_Unlock(&cache_lock);
+	//Mutex_Unlock(&cache_lock);
 	return 0;
 }
 
 int Unfix_From_Cache(int blockNo)
 {
-Mutex_Lock(&cache_lock);
+//Mutex_Lock(&cache_lock);
 	CachePage* page;
 	int rc = Get_From_Hash_Table((&cache_hash), blockNo, (void**)(&page));
 	if(rc){
-		Mutex_Unlock(&cache_lock); return rc;
+		//Mutex_Unlock(&cache_lock); return rc;
 	}
 	if(page->ref_count == 0) {
-		Mutex_Unlock(&cache_lock);
+		//Mutex_Unlock(&cache_lock);
 		return -1; // Cannot unfix
 	}
 	page->ref_count--;
@@ -167,7 +168,7 @@ Mutex_Lock(&cache_lock);
 		Unlink_From_Cache(page);
 		Link_To_Free(page);
 	}
-	Mutex_Unlock(&cache_lock);
+	//Mutex_Unlock(&cache_lock);
 	return 0;
 }
 
@@ -175,12 +176,12 @@ Mutex_Lock(&cache_lock);
 // Set page corresponding to blockNo to dirty
 int Set_Dirty(int blockNo)
 {
-	Mutex_Lock(&cache_lock);
+	//Mutex_Lock(&cache_lock);
 	CachePage* page;
 	int rc = Get_From_Hash_Table(&cache_hash, blockNo, (void**)(&page));
 	if(rc) return rc;
 	page->dirty = 1;
-	Mutex_Unlock(&cache_lock);
+	//Mutex_Unlock(&cache_lock);
 	return 0;
 	
 }
@@ -188,7 +189,7 @@ int Set_Dirty(int blockNo)
 // Flush cache and make all pages clean
 int Flush_Cache()
 {	
-	Mutex_Lock(&cache_lock);
+	//Mutex_Lock(&cache_lock);
 	int i;
 	CachePage* cur = first_page;
 	int rc = 0;
@@ -204,22 +205,22 @@ int Flush_Cache()
 		rc = rc | Write_If_Dirty(cur);
 		cur = cur->next;
 	}
-	Mutex_Unlock(&cache_lock);
+	//Mutex_Unlock(&cache_lock);
 	return rc;
 }
 
 // Flush single page
 int Flush_Cache_Block(int blockNo)
 {
-	Mutex_Lock(&cache_lock);
+	//Mutex_Lock(&cache_lock);
 	CachePage* page;
 	int rc = Get_From_Hash_Table(&cache_hash, blockNo, (void**)&page);
 	if(rc)
 	{
-		Mutex_Unlock(&cache_lock);
+		//Mutex_Unlock(&cache_lock);
 		return 0;
 	}
-	Mutex_Unlock(&cache_lock);
+	//Mutex_Unlock(&cache_lock);
 	return Write_If_Dirty(page);
 }
 	
@@ -227,12 +228,13 @@ int Flush_Cache_Block(int blockNo)
 	
 // Finds a replacement from the free list
 int Find_Replacement(CachePage **rep_page)
-{
+{	
 	// No free page available
 	if(last_free_page == NULL) return -1;
 	
 	// Set cur 
 	*rep_page = last_free_page;
+	Print("Replaced Page is %d\n", (*rep_page)->block_no);
 	return 0;
 }
 
@@ -256,6 +258,8 @@ void Link_To_Free(CachePage* page)
 	if(first_free_page != NULL)
 	{
 		first_free_page->prev = page;
+	}else{
+		last_free_page = page;
 	}
 	first_free_page = page;
 	page->prev = NULL;
@@ -268,7 +272,10 @@ void Link_To_Cache(CachePage* page)
 	if(first_page != NULL)
 	{
 		first_page->prev = page;
+	}else{
+		last_page = page;
 	}
+	
 	first_page = page;
 	page->prev = NULL;
 }

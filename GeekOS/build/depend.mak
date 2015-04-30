@@ -19,11 +19,11 @@ geekos/trap.o: ../src/geekos/trap.c /usr/include/stdc-predef.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stdbool.h \
  ../include/geekos/defs.h ../include/geekos/lock.h \
  ../include/geekos/kthread.h ../include/geekos/list.h \
- ../include/geekos/syscall.h ../include/geekos/trap.h \
- ../include/geekos/user.h ../include/geekos/segment.h \
- ../include/geekos/elf.h ../include/geekos/signal.h \
- ../include/geekos/paging.h ../include/geekos/bootinfo.h \
- ../include/geekos/projects.h
+ ../include/geekos/oscourse/hash.h ../include/geekos/syscall.h \
+ ../include/geekos/trap.h ../include/geekos/user.h \
+ ../include/geekos/segment.h ../include/geekos/elf.h \
+ ../include/geekos/signal.h ../include/geekos/paging.h \
+ ../include/geekos/bootinfo.h ../include/geekos/projects.h
 geekos/irq.o: ../src/geekos/irq.c /usr/include/stdc-predef.h \
  ../include/geekos/kassert.h ../include/geekos/screen.h \
  ../include/geekos/ktypes.h \
@@ -39,8 +39,9 @@ geekos/keyboard.o: ../src/geekos/keyboard.c /usr/include/stdc-predef.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stdbool.h \
  ../include/geekos/list.h ../include/geekos/kassert.h \
  ../include/geekos/screen.h ../include/geekos/lock.h \
- ../include/geekos/irq.h ../include/geekos/int.h ../include/geekos/defs.h \
- ../include/geekos/io.h ../include/geekos/keyboard.h
+ ../include/geekos/oscourse/hash.h ../include/geekos/irq.h \
+ ../include/geekos/int.h ../include/geekos/defs.h ../include/geekos/io.h \
+ ../include/geekos/keyboard.h
 geekos/screen.o: ../src/geekos/screen.c /usr/include/stdc-predef.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stdarg.h \
  ../include/geekos/kassert.h ../include/geekos/screen.h \
@@ -64,16 +65,17 @@ geekos/timer.o: ../src/geekos/timer.c /usr/include/stdc-predef.h \
  ../include/geekos/int.h ../include/geekos/defs.h \
  ../include/geekos/lock.h ../include/geekos/irq.h \
  ../include/geekos/kthread.h ../include/geekos/list.h \
- ../include/geekos/timer.h ../include/geekos/smp.h
+ ../include/geekos/oscourse/hash.h ../include/geekos/timer.h \
+ ../include/geekos/smp.h
 geekos/mem.o: ../src/geekos/mem.c /usr/include/stdc-predef.h \
  ../include/geekos/defs.h ../include/geekos/ktypes.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stdbool.h \
  ../include/geekos/kassert.h ../include/geekos/screen.h \
  ../include/geekos/kthread.h ../include/geekos/list.h \
- ../include/geekos/lock.h ../include/geekos/bootinfo.h \
- ../include/geekos/gdt.h ../include/geekos/int.h \
- ../include/geekos/malloc.h ../include/geekos/string.h \
- ../include/geekos/../libc/string.h \
+ ../include/geekos/lock.h ../include/geekos/oscourse/hash.h \
+ ../include/geekos/bootinfo.h ../include/geekos/gdt.h \
+ ../include/geekos/int.h ../include/geekos/malloc.h \
+ ../include/geekos/string.h ../include/geekos/../libc/string.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stddef.h \
  ../include/geekos/paging.h ../include/geekos/mem.h
 geekos/crc32.o: ../src/geekos/crc32.c /usr/include/stdc-predef.h \
@@ -108,7 +110,8 @@ geekos/smp.o: ../src/geekos/smp.c /usr/include/stdc-predef.h \
  ../include/geekos/lock.h ../include/geekos/int.h \
  ../include/geekos/defs.h ../include/geekos/idt.h \
  ../include/geekos/malloc.h ../include/geekos/kthread.h \
- ../include/geekos/io.h ../include/geekos/timer.h ../include/geekos/tss.h \
+ ../include/geekos/oscourse/hash.h ../include/geekos/io.h \
+ ../include/geekos/timer.h ../include/geekos/tss.h \
  ../include/geekos/trap.h ../include/geekos/mem.h \
  ../include/geekos/paging.h ../include/geekos/bootinfo.h \
  ../include/geekos/gdt.h
@@ -135,8 +138,8 @@ geekos/synch.o: ../src/geekos/synch.c /usr/include/stdc-predef.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stdbool.h \
  ../include/geekos/list.h ../include/geekos/kassert.h \
  ../include/geekos/screen.h ../include/geekos/lock.h \
- ../include/geekos/int.h ../include/geekos/defs.h \
- ../include/geekos/synch.h
+ ../include/geekos/oscourse/hash.h ../include/geekos/int.h \
+ ../include/geekos/defs.h ../include/geekos/synch.h
 geekos/kthread.o: ../src/geekos/kthread.c /usr/include/stdc-predef.h \
  ../include/geekos/kassert.h ../include/geekos/screen.h \
  ../include/geekos/ktypes.h \
@@ -147,11 +150,17 @@ geekos/kthread.o: ../src/geekos/kthread.c /usr/include/stdc-predef.h \
  ../include/geekos/bootinfo.h ../include/geekos/symbol.h \
  ../include/geekos/string.h ../include/geekos/../libc/string.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stddef.h \
- ../include/geekos/kthread.h ../include/geekos/malloc.h \
- ../include/geekos/user.h ../include/geekos/segment.h \
- ../include/geekos/elf.h ../include/geekos/signal.h \
- ../include/geekos/alarm.h ../include/geekos/projects.h \
- ../include/geekos/smp.h
+ ../include/geekos/kthread.h ../include/geekos/oscourse/hash.h \
+ ../include/geekos/malloc.h ../include/geekos/user.h \
+ ../include/geekos/segment.h ../include/geekos/elf.h \
+ ../include/geekos/signal.h ../include/geekos/alarm.h \
+ ../include/geekos/projects.h ../include/geekos/smp.h \
+ ../include/geekos/oscourse/oft.h ../include/geekos/oscourse/inode.h \
+ ../include/geekos/oscourse/fsysdef.h ../include/geekos/oscourse/blocks.h \
+ ../include/geekos/oscourse/virtualdisk.h ../include/geekos/vfs.h \
+ ../include/geekos/fileio.h ../include/geekos/blockdev.h \
+ ../include/geekos/oscourse/diskcache.h \
+ ../include/geekos/oscourse/dirmgmt.h
 geekos/blocks.o: ../src/geekos/oscourse/blocks.c /usr/include/stdc-predef.h \
  ../include/geekos/oscourse/blocks.h ../include/geekos/oscourse/fsysdef.h \
  ../include/geekos/oscourse/virtualdisk.h ../include/geekos/ktypes.h \
@@ -161,10 +170,12 @@ geekos/blocks.o: ../src/geekos/oscourse/blocks.c /usr/include/stdc-predef.h \
  ../include/geekos/lock.h ../include/geekos/fileio.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stddef.h \
  ../include/geekos/blockdev.h ../include/geekos/kthread.h \
- ../include/geekos/oscourse/diskcache.h ../include/geekos/oscourse/hash.h \
+ ../include/geekos/oscourse/hash.h ../include/geekos/oscourse/diskcache.h \
  ../include/geekos/oscourse/inode.h ../include/geekos/string.h \
  ../include/geekos/../libc/string.h ../include/geekos/synch.h \
- ../include/geekos/int.h ../include/geekos/defs.h
+ ../include/geekos/oscourse/oft.h ../include/geekos/oscourse/dirmgmt.h \
+ ../include/geekos/malloc.h ../include/geekos/int.h \
+ ../include/geekos/defs.h
 geekos/hash.o: ../src/geekos/oscourse/hash.c /usr/include/stdc-predef.h \
  ../include/geekos/oscourse/hash.h ../include/geekos/malloc.h \
  ../include/geekos/ktypes.h \
@@ -203,6 +214,7 @@ geekos/virtualdisk.o: ../src/geekos/oscourse/virtualdisk.c \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stdbool.h \
  ../include/geekos/list.h ../include/geekos/kassert.h \
  ../include/geekos/screen.h ../include/geekos/lock.h \
+ ../include/geekos/oscourse/hash.h \
  ../include/geekos/oscourse/virtualdisk.h ../include/geekos/vfs.h \
  ../include/geekos/fileio.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stddef.h \
@@ -211,14 +223,33 @@ geekos/virtualdisk.o: ../src/geekos/oscourse/virtualdisk.c \
  ../include/geekos/timer.h ../include/geekos/string.h \
  ../include/geekos/../libc/string.h ../include/geekos/synch.h
 geekos/oft.o: ../src/geekos/oscourse/oft.c /usr/include/stdc-predef.h \
- ../include/geekos/oscourse/oft.h
+ ../include/geekos/oscourse/oft.h ../include/geekos/oscourse/hash.h \
+ ../include/geekos/oscourse/inode.h ../include/geekos/oscourse/fsysdef.h \
+ ../include/geekos/oscourse/blocks.h \
+ ../include/geekos/oscourse/virtualdisk.h ../include/geekos/ktypes.h \
+ /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stdbool.h \
+ ../include/geekos/vfs.h ../include/geekos/list.h \
+ ../include/geekos/kassert.h ../include/geekos/screen.h \
+ ../include/geekos/lock.h ../include/geekos/fileio.h \
+ /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stddef.h \
+ ../include/geekos/blockdev.h ../include/geekos/kthread.h \
+ ../include/geekos/oscourse/diskcache.h ../include/geekos/string.h \
+ ../include/geekos/../libc/string.h ../include/geekos/oscourse/dirmgmt.h \
+ ../include/geekos/malloc.h
 geekos/dirmgmt.o: ../src/geekos/oscourse/dirmgmt.c /usr/include/stdc-predef.h \
  ../include/geekos/oscourse/dirmgmt.h ../include/geekos/string.h \
  ../include/geekos/../libc/string.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stddef.h \
  ../include/geekos/screen.h ../include/geekos/ktypes.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stdbool.h \
- ../include/geekos/oscourse/fsysdef.h
+ ../include/geekos/oscourse/fsysdef.h ../include/geekos/oscourse/inode.h \
+ ../include/geekos/oscourse/hash.h ../include/geekos/oscourse/blocks.h \
+ ../include/geekos/oscourse/virtualdisk.h ../include/geekos/vfs.h \
+ ../include/geekos/list.h ../include/geekos/kassert.h \
+ ../include/geekos/lock.h ../include/geekos/fileio.h \
+ ../include/geekos/blockdev.h ../include/geekos/kthread.h \
+ ../include/geekos/oscourse/diskcache.h ../include/geekos/malloc.h \
+ ../include/geekos/oscourse/oft.h
 geekos/user.o: ../src/geekos/user.c /usr/include/stdc-predef.h \
  ../include/geekos/errno.h ../include/geekos/ktypes.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stdbool.h \
@@ -227,8 +258,8 @@ geekos/user.o: ../src/geekos/user.c /usr/include/stdc-predef.h \
  ../include/geekos/lock.h ../include/geekos/mem.h \
  ../include/geekos/list.h ../include/geekos/paging.h \
  ../include/geekos/bootinfo.h ../include/geekos/malloc.h \
- ../include/geekos/kthread.h ../include/geekos/vfs.h \
- ../include/geekos/fileio.h \
+ ../include/geekos/kthread.h ../include/geekos/oscourse/hash.h \
+ ../include/geekos/vfs.h ../include/geekos/fileio.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stddef.h \
  ../include/geekos/blockdev.h ../include/geekos/tss.h \
  ../include/geekos/user.h ../include/geekos/segment.h \
@@ -247,8 +278,9 @@ geekos/userseg.o: ../src/geekos/userseg.c /usr/include/stdc-predef.h \
  ../include/geekos/malloc.h ../include/geekos/int.h \
  ../include/geekos/gdt.h ../include/geekos/segment.h \
  ../include/geekos/tss.h ../include/geekos/kthread.h \
- ../include/geekos/argblock.h ../include/geekos/user.h \
- ../include/geekos/elf.h ../include/geekos/signal.h
+ ../include/geekos/oscourse/hash.h ../include/geekos/argblock.h \
+ ../include/geekos/user.h ../include/geekos/elf.h \
+ ../include/geekos/signal.h
 geekos/argblock.o: ../src/geekos/argblock.c /usr/include/stdc-predef.h \
  ../include/geekos/ktypes.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stdbool.h \
@@ -261,7 +293,8 @@ geekos/syscall.o: ../src/geekos/syscall.c /usr/include/stdc-predef.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stdbool.h \
  ../include/geekos/list.h ../include/geekos/kassert.h \
  ../include/geekos/screen.h ../include/geekos/lock.h \
- ../include/geekos/int.h ../include/geekos/defs.h ../include/geekos/elf.h \
+ ../include/geekos/oscourse/hash.h ../include/geekos/int.h \
+ ../include/geekos/defs.h ../include/geekos/elf.h \
  ../include/geekos/malloc.h ../include/geekos/keyboard.h \
  ../include/geekos/string.h ../include/geekos/../libc/string.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stddef.h \
@@ -271,11 +304,11 @@ geekos/syscall.o: ../src/geekos/syscall.c /usr/include/stdc-predef.h \
  ../include/geekos/vfs.h ../include/geekos/fileio.h \
  ../include/geekos/blockdev.h ../include/geekos/sem.h \
  ../include/geekos/projects.h ../include/geekos/oscourse/virtualdisk.h \
- ../include/geekos/oscourse/fsysdef.h ../include/geekos/sys_net.h \
- ../include/geekos/pipe.h ../include/geekos/mem.h \
- ../include/geekos/oscourse/blocks.h \
- ../include/geekos/oscourse/diskcache.h ../include/geekos/oscourse/hash.h \
- ../include/geekos/oscourse/inode.h
+ ../include/geekos/oscourse/fsysdef.h ../include/geekos/oscourse/oft.h \
+ ../include/geekos/oscourse/inode.h ../include/geekos/oscourse/blocks.h \
+ ../include/geekos/oscourse/diskcache.h \
+ ../include/geekos/oscourse/dirmgmt.h ../include/geekos/sys_net.h \
+ ../include/geekos/pipe.h ../include/geekos/mem.h
 geekos/dma.o: ../src/geekos/dma.c /usr/include/stdc-predef.h \
  ../include/geekos/screen.h ../include/geekos/ktypes.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stdbool.h \
@@ -293,8 +326,9 @@ geekos/floppy.o: ../src/geekos/floppy.c /usr/include/stdc-predef.h \
  ../include/geekos/bootinfo.h ../include/geekos/malloc.h \
  ../include/geekos/int.h ../include/geekos/irq.h ../include/geekos/dma.h \
  ../include/geekos/io.h ../include/geekos/timer.h \
- ../include/geekos/kthread.h ../include/geekos/blockdev.h \
- ../include/geekos/fileio.h ../include/geekos/floppy.h
+ ../include/geekos/kthread.h ../include/geekos/oscourse/hash.h \
+ ../include/geekos/blockdev.h ../include/geekos/fileio.h \
+ ../include/geekos/floppy.h
 geekos/elf.o: ../src/geekos/elf.c /usr/include/stdc-predef.h \
  ../include/geekos/errno.h ../include/geekos/kassert.h \
  ../include/geekos/screen.h ../include/geekos/ktypes.h \
@@ -304,11 +338,12 @@ geekos/elf.o: ../src/geekos/elf.c /usr/include/stdc-predef.h \
  ../include/geekos/vfs.h ../include/geekos/list.h \
  ../include/geekos/lock.h ../include/geekos/fileio.h \
  ../include/geekos/blockdev.h ../include/geekos/kthread.h \
- ../include/geekos/malloc.h ../include/geekos/string.h \
- ../include/geekos/../libc/string.h ../include/geekos/user.h \
- ../include/geekos/segment.h ../include/geekos/elf.h \
- ../include/geekos/signal.h ../include/geekos/paging.h \
- ../include/geekos/defs.h ../include/geekos/bootinfo.h
+ ../include/geekos/oscourse/hash.h ../include/geekos/malloc.h \
+ ../include/geekos/string.h ../include/geekos/../libc/string.h \
+ ../include/geekos/user.h ../include/geekos/segment.h \
+ ../include/geekos/elf.h ../include/geekos/signal.h \
+ ../include/geekos/paging.h ../include/geekos/defs.h \
+ ../include/geekos/bootinfo.h
 geekos/blockdev.o: ../src/geekos/blockdev.c /usr/include/stdc-predef.h \
  ../include/geekos/errno.h ../include/geekos/screen.h \
  ../include/geekos/ktypes.h \
@@ -318,8 +353,9 @@ geekos/blockdev.o: ../src/geekos/blockdev.c /usr/include/stdc-predef.h \
  ../include/geekos/malloc.h ../include/geekos/int.h \
  ../include/geekos/kassert.h ../include/geekos/defs.h \
  ../include/geekos/lock.h ../include/geekos/kthread.h \
- ../include/geekos/list.h ../include/geekos/synch.h \
- ../include/geekos/blockdev.h ../include/geekos/fileio.h
+ ../include/geekos/list.h ../include/geekos/oscourse/hash.h \
+ ../include/geekos/synch.h ../include/geekos/blockdev.h \
+ ../include/geekos/fileio.h
 geekos/ide.o: ../src/geekos/ide.c /usr/include/stdc-predef.h \
  ../include/geekos/ktypes.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stdbool.h \
@@ -330,8 +366,8 @@ geekos/ide.o: ../src/geekos/ide.c /usr/include/stdc-predef.h \
  ../include/geekos/io.h ../include/geekos/int.h ../include/geekos/defs.h \
  ../include/geekos/lock.h ../include/geekos/timer.h \
  ../include/geekos/kthread.h ../include/geekos/list.h \
- ../include/geekos/blockdev.h ../include/geekos/fileio.h \
- ../include/geekos/ide.h
+ ../include/geekos/oscourse/hash.h ../include/geekos/blockdev.h \
+ ../include/geekos/fileio.h ../include/geekos/ide.h
 geekos/vfs.o: ../src/geekos/vfs.c /usr/include/stdc-predef.h \
  ../include/geekos/errno.h ../include/geekos/list.h \
  ../include/geekos/ktypes.h \
@@ -341,9 +377,9 @@ geekos/vfs.o: ../src/geekos/vfs.c /usr/include/stdc-predef.h \
  ../include/geekos/../libc/string.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stddef.h \
  ../include/geekos/malloc.h ../include/geekos/synch.h \
- ../include/geekos/kthread.h ../include/geekos/vfs.h \
- ../include/geekos/fileio.h ../include/geekos/blockdev.h \
- ../include/geekos/projects.h
+ ../include/geekos/kthread.h ../include/geekos/oscourse/hash.h \
+ ../include/geekos/vfs.h ../include/geekos/fileio.h \
+ ../include/geekos/blockdev.h ../include/geekos/projects.h
 geekos/pfat.o: ../src/geekos/pfat.c /usr/include/stdc-predef.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/limits.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/syslimits.h \
@@ -359,11 +395,11 @@ geekos/pfat.o: ../src/geekos/pfat.c /usr/include/stdc-predef.h \
  ../include/geekos/malloc.h ../include/geekos/ide.h \
  ../include/geekos/blockdev.h ../include/geekos/kthread.h \
  ../include/geekos/list.h ../include/geekos/kassert.h \
- ../include/geekos/lock.h ../include/geekos/fileio.h \
- ../include/geekos/bitset.h ../include/geekos/vfs.h \
- ../include/geekos/synch.h ../include/geekos/pfat.h \
- ../include/geekos/fileio.h ../include/geekos/vfs.h \
- ../include/geekos/projects.h
+ ../include/geekos/lock.h ../include/geekos/oscourse/hash.h \
+ ../include/geekos/fileio.h ../include/geekos/bitset.h \
+ ../include/geekos/vfs.h ../include/geekos/synch.h \
+ ../include/geekos/pfat.h ../include/geekos/fileio.h \
+ ../include/geekos/vfs.h ../include/geekos/projects.h
 geekos/bitset.o: ../src/geekos/bitset.c /usr/include/stdc-predef.h \
  ../include/geekos/kassert.h ../include/geekos/screen.h \
  ../include/geekos/ktypes.h \
@@ -380,7 +416,8 @@ geekos/bufcache.o: ../src/geekos/bufcache.c /usr/include/stdc-predef.h \
  ../include/geekos/list.h ../include/geekos/lock.h \
  ../include/geekos/paging.h ../include/geekos/bootinfo.h \
  ../include/geekos/malloc.h ../include/geekos/blockdev.h \
- ../include/geekos/kthread.h ../include/geekos/fileio.h \
+ ../include/geekos/kthread.h ../include/geekos/oscourse/hash.h \
+ ../include/geekos/fileio.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stddef.h \
  ../include/geekos/bufcache.h ../include/geekos/synch.h
 geekos/signal.o: ../src/geekos/signal.c /usr/include/stdc-predef.h \
@@ -393,10 +430,11 @@ geekos/signal.o: ../src/geekos/signal.c /usr/include/stdc-predef.h \
  ../include/geekos/bootinfo.h ../include/geekos/symbol.h \
  ../include/geekos/string.h ../include/geekos/../libc/string.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stddef.h \
- ../include/geekos/kthread.h ../include/geekos/malloc.h \
- ../include/geekos/user.h ../include/geekos/segment.h \
- ../include/geekos/elf.h ../include/geekos/signal.h \
- ../include/geekos/projects.h ../include/geekos/alarm.h
+ ../include/geekos/kthread.h ../include/geekos/oscourse/hash.h \
+ ../include/geekos/malloc.h ../include/geekos/user.h \
+ ../include/geekos/segment.h ../include/geekos/elf.h \
+ ../include/geekos/signal.h ../include/geekos/projects.h \
+ ../include/geekos/alarm.h
 geekos/paging.o: ../src/geekos/paging.c /usr/include/stdc-predef.h \
  ../include/geekos/string.h ../include/geekos/../libc/string.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stddef.h \
@@ -405,22 +443,24 @@ geekos/paging.o: ../src/geekos/paging.c /usr/include/stdc-predef.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stdbool.h \
  ../include/geekos/defs.h ../include/geekos/lock.h \
  ../include/geekos/idt.h ../include/geekos/kthread.h \
- ../include/geekos/list.h ../include/geekos/mem.h \
- ../include/geekos/paging.h ../include/geekos/bootinfo.h \
- ../include/geekos/malloc.h ../include/geekos/gdt.h \
- ../include/geekos/segment.h ../include/geekos/user.h \
- ../include/geekos/elf.h ../include/geekos/signal.h \
- ../include/geekos/vfs.h ../include/geekos/fileio.h \
- ../include/geekos/blockdev.h ../include/geekos/crc32.h \
- ../include/geekos/errno.h ../include/geekos/projects.h \
- ../include/geekos/smp.h ../include/libc/mmap.h
+ ../include/geekos/list.h ../include/geekos/oscourse/hash.h \
+ ../include/geekos/mem.h ../include/geekos/paging.h \
+ ../include/geekos/bootinfo.h ../include/geekos/malloc.h \
+ ../include/geekos/gdt.h ../include/geekos/segment.h \
+ ../include/geekos/user.h ../include/geekos/elf.h \
+ ../include/geekos/signal.h ../include/geekos/vfs.h \
+ ../include/geekos/fileio.h ../include/geekos/blockdev.h \
+ ../include/geekos/crc32.h ../include/geekos/errno.h \
+ ../include/geekos/projects.h ../include/geekos/smp.h \
+ ../include/libc/mmap.h
 geekos/sem.o: ../src/geekos/sem.c /usr/include/stdc-predef.h \
  ../include/geekos/syscall.h ../include/geekos/errno.h \
  ../include/geekos/kthread.h ../include/geekos/ktypes.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stdbool.h \
  ../include/geekos/list.h ../include/geekos/kassert.h \
  ../include/geekos/screen.h ../include/geekos/lock.h \
- ../include/geekos/int.h ../include/geekos/defs.h ../include/geekos/elf.h \
+ ../include/geekos/oscourse/hash.h ../include/geekos/int.h \
+ ../include/geekos/defs.h ../include/geekos/elf.h \
  ../include/geekos/malloc.h ../include/geekos/keyboard.h \
  ../include/geekos/string.h ../include/geekos/../libc/string.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stddef.h \
@@ -446,10 +486,10 @@ geekos/gosfs.o: ../src/geekos/gosfs.c /usr/include/stdc-predef.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stddef.h \
  ../include/geekos/bitset.h ../include/geekos/synch.h \
  ../include/geekos/kthread.h ../include/geekos/list.h \
- ../include/geekos/lock.h ../include/geekos/bufcache.h \
- ../include/geekos/gosfs.h ../include/geekos/blockdev.h \
- ../include/geekos/fileio.h ../include/geekos/vfs.h \
- ../include/geekos/projects.h
+ ../include/geekos/lock.h ../include/geekos/oscourse/hash.h \
+ ../include/geekos/bufcache.h ../include/geekos/gosfs.h \
+ ../include/geekos/blockdev.h ../include/geekos/fileio.h \
+ ../include/geekos/vfs.h ../include/geekos/projects.h
 geekos/gfs2.o: ../src/geekos/gfs2.c /usr/include/stdc-predef.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/limits.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/syslimits.h \
@@ -466,10 +506,10 @@ geekos/gfs2.o: ../src/geekos/gfs2.c /usr/include/stdc-predef.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stddef.h \
  ../include/geekos/bitset.h ../include/geekos/synch.h \
  ../include/geekos/kthread.h ../include/geekos/list.h \
- ../include/geekos/lock.h ../include/geekos/bufcache.h \
- ../include/geekos/gfs2.h ../include/geekos/vfs.h \
- ../include/geekos/fileio.h ../include/geekos/blockdev.h \
- ../include/geekos/projects.h
+ ../include/geekos/lock.h ../include/geekos/oscourse/hash.h \
+ ../include/geekos/bufcache.h ../include/geekos/gfs2.h \
+ ../include/geekos/vfs.h ../include/geekos/fileio.h \
+ ../include/geekos/blockdev.h ../include/geekos/projects.h
 geekos/cfs.o: ../src/geekos/cfs.c /usr/include/stdc-predef.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/limits.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/syslimits.h \
@@ -490,12 +530,12 @@ geekos/cfs.o: ../src/geekos/cfs.c /usr/include/stdc-predef.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stddef.h \
  ../include/geekos/bitset.h ../include/geekos/synch.h \
  ../include/geekos/kthread.h ../include/geekos/list.h \
- ../include/geekos/lock.h ../include/geekos/bufcache.h \
- ../include/geekos/cfs.h ../include/geekos/blockdev.h \
- ../include/geekos/fileio.h ../include/geekos/vfs.h \
- ../include/geekos/projects.h ../include/geekos/mem.h \
- ../include/geekos/defs.h ../include/geekos/paging.h \
- ../include/geekos/bootinfo.h
+ ../include/geekos/lock.h ../include/geekos/oscourse/hash.h \
+ ../include/geekos/bufcache.h ../include/geekos/cfs.h \
+ ../include/geekos/blockdev.h ../include/geekos/fileio.h \
+ ../include/geekos/vfs.h ../include/geekos/projects.h \
+ ../include/geekos/mem.h ../include/geekos/defs.h \
+ ../include/geekos/paging.h ../include/geekos/bootinfo.h
 geekos/socket.o: ../src/geekos/net/socket.c /usr/include/stdc-predef.h \
  ../include/geekos/net/socket.h ../include/geekos/defs.h \
  ../include/geekos/ktypes.h \
@@ -504,8 +544,8 @@ geekos/socket.o: ../src/geekos/net/socket.c /usr/include/stdc-predef.h \
  ../include/geekos/kassert.h ../include/geekos/screen.h \
  ../include/geekos/lock.h ../include/geekos/net/net.h \
  ../include/geekos/synch.h ../include/geekos/kthread.h \
- ../include/geekos/net/netbuf.h ../include/geekos/string.h \
- ../include/geekos/../libc/string.h \
+ ../include/geekos/oscourse/hash.h ../include/geekos/net/netbuf.h \
+ ../include/geekos/string.h ../include/geekos/../libc/string.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stddef.h \
  ../include/geekos/net/ipdefs.h ../include/geekos/malloc.h \
  ../include/geekos/errno.h ../include/geekos/net/udp.h \
@@ -518,8 +558,9 @@ geekos/ip.o: ../src/geekos/net/ip.c /usr/include/stdc-predef.h \
  ../include/geekos/list.h ../include/geekos/kassert.h \
  ../include/geekos/screen.h ../include/geekos/lock.h \
  ../include/geekos/net/net.h ../include/geekos/synch.h \
- ../include/geekos/kthread.h ../include/geekos/net/netbuf.h \
- ../include/geekos/string.h ../include/geekos/../libc/string.h \
+ ../include/geekos/kthread.h ../include/geekos/oscourse/hash.h \
+ ../include/geekos/net/netbuf.h ../include/geekos/string.h \
+ ../include/geekos/../libc/string.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stddef.h \
  ../include/geekos/net/ipdefs.h ../include/geekos/errno.h \
  ../include/geekos/malloc.h ../include/geekos/net/arp.h \
@@ -533,8 +574,9 @@ geekos/net.o: ../src/geekos/net/net.c /usr/include/stdc-predef.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stdbool.h \
  ../include/geekos/list.h ../include/geekos/kassert.h \
  ../include/geekos/screen.h ../include/geekos/lock.h \
- ../include/geekos/defs.h ../include/geekos/net/netbuf.h \
- ../include/geekos/string.h ../include/geekos/../libc/string.h \
+ ../include/geekos/oscourse/hash.h ../include/geekos/defs.h \
+ ../include/geekos/net/netbuf.h ../include/geekos/string.h \
+ ../include/geekos/../libc/string.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stddef.h \
  ../include/geekos/malloc.h ../include/geekos/int.h \
  ../include/geekos/net/ne2000.h ../include/geekos/io.h \
@@ -547,8 +589,9 @@ geekos/tcp.o: ../src/geekos/net/tcp.c /usr/include/stdc-predef.h \
  ../include/geekos/list.h ../include/geekos/kassert.h \
  ../include/geekos/screen.h ../include/geekos/lock.h \
  ../include/geekos/net/net.h ../include/geekos/synch.h \
- ../include/geekos/kthread.h ../include/geekos/net/netbuf.h \
- ../include/geekos/string.h ../include/geekos/../libc/string.h \
+ ../include/geekos/kthread.h ../include/geekos/oscourse/hash.h \
+ ../include/geekos/net/netbuf.h ../include/geekos/string.h \
+ ../include/geekos/../libc/string.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stddef.h \
  ../include/geekos/net/ipdefs.h ../include/geekos/malloc.h \
  ../include/geekos/errno.h ../include/geekos/net/socket.h \
@@ -559,11 +602,12 @@ geekos/arp.o: ../src/geekos/net/arp.c /usr/include/stdc-predef.h \
  ../include/geekos/errno.h ../include/geekos/kassert.h \
  ../include/geekos/screen.h ../include/geekos/kthread.h \
  ../include/geekos/list.h ../include/geekos/lock.h \
- ../include/geekos/int.h ../include/geekos/defs.h \
- ../include/geekos/timer.h ../include/geekos/alarm.h \
- ../include/geekos/net/arp.h ../include/geekos/net/net.h \
- ../include/geekos/synch.h ../include/geekos/net/netbuf.h \
- ../include/geekos/string.h ../include/geekos/../libc/string.h \
+ ../include/geekos/oscourse/hash.h ../include/geekos/int.h \
+ ../include/geekos/defs.h ../include/geekos/timer.h \
+ ../include/geekos/alarm.h ../include/geekos/net/arp.h \
+ ../include/geekos/net/net.h ../include/geekos/synch.h \
+ ../include/geekos/net/netbuf.h ../include/geekos/string.h \
+ ../include/geekos/../libc/string.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stddef.h \
  ../include/geekos/net/ethernet.h ../include/geekos/net/ip.h \
  ../include/geekos/net/ipdefs.h ../include/geekos/projects.h
@@ -575,8 +619,9 @@ geekos/ethernet.o: ../src/geekos/net/ethernet.c /usr/include/stdc-predef.h \
  ../include/geekos/malloc.h ../include/geekos/errno.h \
  ../include/geekos/net/ethernet.h ../include/geekos/net/net.h \
  ../include/geekos/synch.h ../include/geekos/kthread.h \
- ../include/geekos/list.h ../include/geekos/net/netbuf.h \
- ../include/geekos/string.h ../include/geekos/../libc/string.h \
+ ../include/geekos/list.h ../include/geekos/oscourse/hash.h \
+ ../include/geekos/net/netbuf.h ../include/geekos/string.h \
+ ../include/geekos/../libc/string.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stddef.h \
  ../include/geekos/projects.h
 geekos/rip.o: ../src/geekos/net/rip.c /usr/include/stdc-predef.h \
@@ -587,8 +632,9 @@ geekos/rip.o: ../src/geekos/net/rip.c /usr/include/stdc-predef.h \
  ../include/geekos/list.h ../include/geekos/kassert.h \
  ../include/geekos/screen.h ../include/geekos/lock.h \
  ../include/geekos/net/net.h ../include/geekos/synch.h \
- ../include/geekos/kthread.h ../include/geekos/net/netbuf.h \
- ../include/geekos/string.h ../include/geekos/../libc/string.h \
+ ../include/geekos/kthread.h ../include/geekos/oscourse/hash.h \
+ ../include/geekos/net/netbuf.h ../include/geekos/string.h \
+ ../include/geekos/../libc/string.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stddef.h \
  ../include/geekos/net/ipdefs.h ../include/geekos/alarm.h \
  ../include/geekos/net/routing.h ../include/geekos/projects.h
@@ -598,9 +644,9 @@ geekos/ne2000.o: ../src/geekos/net/ne2000.c /usr/include/stdc-predef.h \
  ../include/geekos/list.h ../include/geekos/kassert.h \
  ../include/geekos/screen.h ../include/geekos/lock.h \
  ../include/geekos/net/net.h ../include/geekos/synch.h \
- ../include/geekos/kthread.h ../include/geekos/defs.h \
- ../include/geekos/net/netbuf.h ../include/geekos/string.h \
- ../include/geekos/../libc/string.h \
+ ../include/geekos/kthread.h ../include/geekos/oscourse/hash.h \
+ ../include/geekos/defs.h ../include/geekos/net/netbuf.h \
+ ../include/geekos/string.h ../include/geekos/../libc/string.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stddef.h \
  ../include/geekos/io.h ../include/geekos/irq.h ../include/geekos/int.h \
  ../include/geekos/malloc.h ../include/geekos/idt.h
@@ -619,7 +665,8 @@ geekos/sys_net.o: ../src/geekos/net/sys_net.c /usr/include/stdc-predef.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stdbool.h \
  ../include/geekos/list.h ../include/geekos/kassert.h \
  ../include/geekos/screen.h ../include/geekos/lock.h \
- ../include/geekos/int.h ../include/geekos/defs.h ../include/geekos/elf.h \
+ ../include/geekos/oscourse/hash.h ../include/geekos/int.h \
+ ../include/geekos/defs.h ../include/geekos/elf.h \
  ../include/geekos/malloc.h ../include/geekos/keyboard.h \
  ../include/geekos/string.h ../include/geekos/../libc/string.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stddef.h \
@@ -642,8 +689,8 @@ geekos/udp.o: ../src/geekos/net/udp.c /usr/include/stdc-predef.h \
  ../include/geekos/kassert.h ../include/geekos/screen.h \
  ../include/geekos/lock.h ../include/geekos/net/net.h \
  ../include/geekos/synch.h ../include/geekos/kthread.h \
- ../include/geekos/net/netbuf.h ../include/geekos/string.h \
- ../include/geekos/../libc/string.h \
+ ../include/geekos/oscourse/hash.h ../include/geekos/net/netbuf.h \
+ ../include/geekos/string.h ../include/geekos/../libc/string.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stddef.h \
  ../include/geekos/net/ipdefs.h ../include/geekos/net/socket.h \
  ../include/geekos/malloc.h ../include/geekos/errno.h \
@@ -655,8 +702,9 @@ geekos/routing.o: ../src/geekos/net/routing.c /usr/include/stdc-predef.h \
  ../include/geekos/net/net.h ../include/geekos/synch.h \
  ../include/geekos/kthread.h ../include/geekos/list.h \
  ../include/geekos/kassert.h ../include/geekos/screen.h \
- ../include/geekos/lock.h ../include/geekos/net/netbuf.h \
- ../include/geekos/string.h ../include/geekos/../libc/string.h \
+ ../include/geekos/lock.h ../include/geekos/oscourse/hash.h \
+ ../include/geekos/net/netbuf.h ../include/geekos/string.h \
+ ../include/geekos/../libc/string.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stddef.h \
  ../include/geekos/net/ip.h ../include/geekos/net/ipdefs.h \
  ../include/geekos/malloc.h ../include/geekos/errno.h \
@@ -670,10 +718,10 @@ geekos/sound.o: ../src/geekos/sound/sound.c /usr/include/stdc-predef.h \
  ../include/geekos/lock.h ../include/geekos/irq.h ../include/geekos/dma.h \
  ../include/geekos/malloc.h ../include/geekos/errno.h \
  ../include/geekos/kthread.h ../include/geekos/list.h \
- ../include/geekos/timer.h ../include/geekos/alarm.h \
- ../include/geekos/mem.h ../include/geekos/paging.h \
- ../include/geekos/bootinfo.h ../include/geekos/vfs.h \
- ../include/geekos/fileio.h \
+ ../include/geekos/oscourse/hash.h ../include/geekos/timer.h \
+ ../include/geekos/alarm.h ../include/geekos/mem.h \
+ ../include/geekos/paging.h ../include/geekos/bootinfo.h \
+ ../include/geekos/vfs.h ../include/geekos/fileio.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stddef.h \
  ../include/geekos/blockdev.h ../include/geekos/projects.h \
  ../include/geekos/string.h ../include/geekos/../libc/string.h \
@@ -686,7 +734,7 @@ geekos/alarm.o: ../src/geekos/alarm.c /usr/include/stdc-predef.h \
  ../include/geekos/kassert.h ../include/geekos/screen.h \
  ../include/geekos/lock.h ../include/geekos/malloc.h \
  ../include/geekos/errno.h ../include/geekos/int.h \
- ../include/geekos/kthread.h
+ ../include/geekos/kthread.h ../include/geekos/oscourse/hash.h
 geekos/pipe.o: ../src/geekos/pipe.c /usr/include/stdc-predef.h \
  ../include/geekos/pipe.h ../include/geekos/vfs.h \
  ../include/geekos/ktypes.h \
@@ -696,10 +744,10 @@ geekos/pipe.o: ../src/geekos/pipe.c /usr/include/stdc-predef.h \
  ../include/geekos/fileio.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stddef.h \
  ../include/geekos/blockdev.h ../include/geekos/kthread.h \
- ../include/geekos/malloc.h ../include/geekos/string.h \
- ../include/geekos/../libc/string.h ../include/geekos/errno.h \
- ../include/geekos/projects.h ../include/geekos/int.h \
- ../include/geekos/defs.h
+ ../include/geekos/oscourse/hash.h ../include/geekos/malloc.h \
+ ../include/geekos/string.h ../include/geekos/../libc/string.h \
+ ../include/geekos/errno.h ../include/geekos/projects.h \
+ ../include/geekos/int.h ../include/geekos/defs.h
 geekos/main.o: ../src/geekos/main.c /usr/include/stdc-predef.h \
  ../include/geekos/bootinfo.h ../include/geekos/string.h \
  ../include/geekos/../libc/string.h \
@@ -711,25 +759,27 @@ geekos/main.o: ../src/geekos/main.c /usr/include/stdc-predef.h \
  ../include/geekos/lock.h ../include/geekos/paging.h \
  ../include/geekos/crc32.h ../include/geekos/tss.h \
  ../include/geekos/int.h ../include/geekos/kthread.h \
- ../include/geekos/trap.h ../include/geekos/timer.h \
- ../include/geekos/keyboard.h ../include/geekos/dma.h \
- ../include/geekos/ide.h ../include/geekos/floppy.h \
- ../include/geekos/pfat.h ../include/geekos/fileio.h \
- ../include/geekos/vfs.h ../include/geekos/fileio.h \
- ../include/geekos/blockdev.h ../include/geekos/vfs.h \
- ../include/geekos/user.h ../include/geekos/segment.h \
- ../include/geekos/elf.h ../include/geekos/signal.h \
- ../include/geekos/gosfs.h ../include/geekos/gfs2.h \
- ../include/geekos/cfs.h ../include/geekos/net/ne2000.h \
- ../include/geekos/net/net.h ../include/geekos/synch.h \
- ../include/geekos/net/netbuf.h ../include/geekos/net/arp.h \
- ../include/geekos/alarm.h ../include/geekos/net/ip.h \
- ../include/geekos/net/ipdefs.h ../include/geekos/net/routing.h \
- ../include/geekos/net/socket.h ../include/geekos/net/rip.h \
- ../include/geekos/projects.h ../include/geekos/sound.h \
- ../include/geekos/smp.h ../include/geekos/io.h \
+ ../include/geekos/oscourse/hash.h ../include/geekos/trap.h \
+ ../include/geekos/timer.h ../include/geekos/keyboard.h \
+ ../include/geekos/dma.h ../include/geekos/ide.h \
+ ../include/geekos/floppy.h ../include/geekos/pfat.h \
+ ../include/geekos/fileio.h ../include/geekos/vfs.h \
+ ../include/geekos/fileio.h ../include/geekos/blockdev.h \
+ ../include/geekos/vfs.h ../include/geekos/user.h \
+ ../include/geekos/segment.h ../include/geekos/elf.h \
+ ../include/geekos/signal.h ../include/geekos/gosfs.h \
+ ../include/geekos/gfs2.h ../include/geekos/cfs.h \
+ ../include/geekos/net/ne2000.h ../include/geekos/net/net.h \
+ ../include/geekos/synch.h ../include/geekos/net/netbuf.h \
+ ../include/geekos/net/arp.h ../include/geekos/alarm.h \
+ ../include/geekos/net/ip.h ../include/geekos/net/ipdefs.h \
+ ../include/geekos/net/routing.h ../include/geekos/net/socket.h \
+ ../include/geekos/net/rip.h ../include/geekos/projects.h \
+ ../include/geekos/sound.h ../include/geekos/smp.h ../include/geekos/io.h \
  ../include/geekos/oscourse/virtualdisk.h \
- ../include/geekos/oscourse/fsysdef.h
+ ../include/geekos/oscourse/fsysdef.h ../include/geekos/oscourse/blocks.h \
+ ../include/geekos/oscourse/diskcache.h \
+ ../include/geekos/oscourse/inode.h
 libc/socket.o: ../src/libc/socket.c /usr/include/stdc-predef.h \
  ../include/libc/socket.h ../include/geekos/defs.h \
  ../include/geekos/ktypes.h \
@@ -787,9 +837,9 @@ libc/net.o: ../src/libc/net.c /usr/include/stdc-predef.h \
  ../include/geekos/list.h ../include/geekos/kassert.h \
  ../include/geekos/screen.h ../include/geekos/lock.h \
  ../include/geekos/net/net.h ../include/geekos/synch.h \
- ../include/geekos/kthread.h ../include/geekos/net/netbuf.h \
- ../include/geekos/string.h ../include/geekos/../libc/string.h \
- ../include/geekos/net/ipdefs.h
+ ../include/geekos/kthread.h ../include/geekos/oscourse/hash.h \
+ ../include/geekos/net/netbuf.h ../include/geekos/string.h \
+ ../include/geekos/../libc/string.h ../include/geekos/net/ipdefs.h
 libc/virtdiskio.o: ../src/libc/virtdiskio.c /usr/include/stdc-predef.h \
  ../include/geekos/errno.h ../include/geekos/syscall.h \
  ../include/libc/fileio.h ../include/geekos/fileio.h \
@@ -797,6 +847,18 @@ libc/virtdiskio.o: ../src/libc/virtdiskio.c /usr/include/stdc-predef.h \
  ../include/geekos/ktypes.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stdbool.h \
  ../include/libc/string.h
+libc/virtfileio.o: ../src/libc/virtfileio.c /usr/include/stdc-predef.h \
+ ../include/geekos/oscourse/oft.h ../include/geekos/oscourse/hash.h \
+ ../include/geekos/oscourse/inode.h ../include/geekos/oscourse/fsysdef.h \
+ ../include/geekos/oscourse/blocks.h \
+ ../include/geekos/oscourse/virtualdisk.h ../include/geekos/ktypes.h \
+ /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stdbool.h \
+ ../include/geekos/vfs.h ../include/geekos/fileio.h \
+ /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stddef.h \
+ ../include/geekos/oscourse/diskcache.h ../include/geekos/string.h \
+ ../include/geekos/../libc/string.h ../include/geekos/oscourse/dirmgmt.h \
+ ../include/geekos/screen.h ../include/geekos/malloc.h \
+ ../include/geekos/errno.h ../include/geekos/syscall.h
 libc/sema.o: ../src/libc/sema.c /usr/include/stdc-predef.h \
  ../include/geekos/syscall.h ../include/geekos/sem.h \
  ../include/libc/string.h \

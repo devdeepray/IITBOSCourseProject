@@ -1,6 +1,7 @@
 #include <geekos/oscourse/inode.h>
 #include <geekos/malloc.h>
 #include <geekos/synch.h>
+#include <geekos/oscourse/fsysdef.h>
 
 InodeManager inode_manager;
 struct Mutex inode_lock;
@@ -22,8 +23,8 @@ int Init_Inode_Manager() {
 
 	int rc = Init_Inode_Cache();
 
-	Mutex_Init(&inode_lock);
-	Mutex_Init(&inode_cache_lock);
+	//Mutex_Init(&inode_lock);
+	//Mutex_Init(&inode_cache_lock);
 
 	return rc;
 }
@@ -56,7 +57,7 @@ int Shut_Down_Inode_Manager()
 	
 int Free_Inode_Cache()
 {
-	Mutex_Lock(&inode_cache_lock);
+	//Mutex_Lock(&inode_cache_lock);
 	CacheInode* cur = inode_manager.first_free_inode;
 	while(cur != NULL)
 	{
@@ -71,7 +72,7 @@ int Free_Inode_Cache()
 		Free(cur);
 		cur = next;
 	}
-	Mutex_Unlock(&inode_cache_lock);
+	//Mutex_Unlock(&inode_cache_lock);
 	return 0;
 }
 
@@ -145,10 +146,14 @@ int Allocate_Inode(int* freeInode) {
 
 /* Frees the given inode number by setting the corresponding bit in the bitmap to 0 */
 int Free_Inode(int inodeNo) {
-	Mutex_Lock(&inode_lock);
+	//Mutex_Lock(&inode_lock);
 	if(inodeNo > disk_superblock.numInodeBlocks * (BLOCK_SIZE /(int)sizeof(Inode)))
 	{
 		return -1;
+	}
+	int rc = Truncate_From(inodeNo, 0);
+	if (rc){
+		return rc;
 	}
 	// Calculate the block number for the corresponding bit
 	int inodeBlockNo = disk_superblock.firstInodeBitmapBlock + (inodeNo / (disk_superblock.blockSizeInBytes *(int)sizeof(char)));
@@ -158,7 +163,7 @@ int Free_Inode(int inodeNo) {
 	int bitNumber = inodeNo % 8;
 	
 	char *buf;
-	int rc = Get_Into_Cache(inodeBlockNo, &buf); // Blocking call to get something into cache
+	rc = Get_Into_Cache(inodeBlockNo, &buf); // Blocking call to get something into cache
 	if (rc){
 		return rc;
 	}
@@ -170,7 +175,7 @@ int Free_Inode(int inodeNo) {
 	rc = rc | Set_Dirty(inodeBlockNo);
 	rc = rc | Unfix_From_Cache(inodeBlockNo);
 	rc = rc | Flush_Cache_Block(inodeBlockNo);
-	Mutex_Unlock(&inode_lock);
+	//Mutex_Unlock(&inode_lock);
 	return rc;
 }
 
@@ -178,11 +183,11 @@ int Free_Inode(int inodeNo) {
 int Create_New_Inode(InodeMetaData meta_data, int* newInodeNo) {
 	Inode newInode;
 	newInode.meta_data = meta_data;
-	Mutex_Lock(&inode_lock);
+	//Mutex_Lock(&inode_lock);
 	int rc = Allocate_Inode(newInodeNo);
 	
 	int blockNo = (*newInodeNo) / (BLOCK_SIZE /(int)sizeof(Inode)) + disk_superblock.firstInodeBlock;
-	
+	//~ Print( " %d,%d  here", blockNo, disk_superblock.firstInodeBlock);
 	int indexInBlock = (*newInodeNo) % (BLOCK_SIZE /(int)sizeof(Inode));
 	Inode *buf;
 	rc = rc | Get_Into_Cache(blockNo, (char**)&buf);
@@ -191,17 +196,19 @@ int Create_New_Inode(InodeMetaData meta_data, int* newInodeNo) {
 	rc = rc | Set_Dirty(blockNo);
 	rc = rc | Unfix_From_Cache(blockNo);
 	rc = rc | Flush_Cache_Block(blockNo);
-	Mutex_Unlock(&inode_lock);
+	
+	//Mutex_Unlock(&inode_lock);
 	return rc;
 }
 
 // Gets a page into cache, or if it is there, icreases refcount
 int Get_Inode_Into_Cache(int inodeNo, Inode** inode_buf)
 {
+	//~ Print("6\n");
 	CacheInode *cache_inode;
-	Mutex_Lock(&inode_cache_lock);	   
+	//Mutex_Lock(&inode_cache_lock);	   
 	int rc = Get_From_Hash_Table(&(inode_manager.cache_hash), inodeNo, (void**) &cache_inode);
-	   
+	  //~ Print("7\n");
 	if(rc == 0)
 	{
 		if(cache_inode->ref_count == 0) // In the free list
@@ -216,6 +223,7 @@ int Get_Inode_Into_Cache(int inodeNo, Inode** inode_buf)
 		}
 			
 		// Already exists
+		Print("inode cache hit\n");
 		cache_inode->ref_count++;
 		(*inode_buf) = &(cache_inode->inode);
 	}
@@ -224,15 +232,19 @@ int Get_Inode_Into_Cache(int inodeNo, Inode** inode_buf)
 		   
 		// Need to fetch from disk
 		CacheInode *rep_page;
-		if(inode_manager.current_cache_size < DISK_CACHE_SIZE) // Cache is still small
+		if(inode_manager.current_cache_size < INODE_CACHE_SIZE) // Cache is still small
 		{
 		   
 			// Allocate new cache page in the free list
+			//~ Print("7\n");
 			rep_page = (CacheInode*) Malloc(sizeof(CacheInode));
+			//~ Print("8\n");
 			rep_page->ref_count = 0;
 			rep_page->dirty = 0;
 			rep_page->inodeNo = -1; // Not a valid block
+			//~ Print("9\n");
 			Link_Inode_To_Free(rep_page);
+			//~ Print("10\n");
 			inode_manager.current_cache_size++;
 		}
 		else // Cache size is max
@@ -248,27 +260,33 @@ int Get_Inode_Into_Cache(int inodeNo, Inode** inode_buf)
 		}
 		   
 		// Read actual contents
+		//~ Print("11\n");
 		rc = Read_Inode_From_Disk(&(rep_page->inode), inodeNo);
 		if(rc)	goto cleanAndReturn; // Read failed
-		   
+		   //~ Print("12\n");
 		// Add new entry to hash
 		rc = Add_To_Hash_Table(&(inode_manager.cache_hash), inodeNo, (void**) rep_page);
 		if(rc)	goto cleanAndReturn;
-		   
+		   //~ Print("13\n");
 		rep_page->inodeNo = inodeNo; // Set block number
+		//~ Print("14\n");
 		Unlink_Inode_From_Free(rep_page); // Remove from free
+		//~ Print("15\n");
 		Link_Inode_To_Cache(rep_page); // Add to main cache
+		//~ Print("16\n");
 		rep_page->ref_count = 1; // make refcount 1
 		(*inode_buf) = &(rep_page->inode);
 	}
+	
 	cleanAndReturn:
-	Mutex_Unlock(&inode_cache_lock);
+	
+	//Mutex_Unlock(&inode_cache_lock);
 	return rc;
 }
 
 int Unfix_Inode_From_Cache(int inodeNo)
 {
-	Mutex_Lock(&inode_cache_lock);
+	//Mutex_Lock(&inode_cache_lock);
 	CacheInode* page;
 	int rc = Get_From_Hash_Table((&(inode_manager.cache_hash)), inodeNo, (void**)(&page));
 	if(rc) return rc;
@@ -282,7 +300,7 @@ int Unfix_Inode_From_Cache(int inodeNo)
 		Unlink_Inode_From_Cache(page);
 		Link_Inode_To_Free(page);
 	}
-	Mutex_Unlock(&inode_cache_lock);
+	//Mutex_Unlock(&inode_cache_lock);
 	return 0;
 }
 
@@ -290,7 +308,7 @@ int Unfix_Inode_From_Cache(int inodeNo)
 // Set page corresponding to inodeNo to dirty
 int Set_Inode_Dirty(int inodeNo)
 {
-	Mutex_Lock(&inode_cache_lock);
+	//Mutex_Lock(&inode_cache_lock);
 	CacheInode* page;
 	int rc = Get_From_Hash_Table(&(inode_manager.cache_hash), inodeNo, (void**)(&page));
 	if(rc)
@@ -298,14 +316,14 @@ int Set_Inode_Dirty(int inodeNo)
 		 return rc;
 	}
 	page->dirty = 1;
-	Mutex_Unlock(&inode_cache_lock);
+	//Mutex_Unlock(&inode_cache_lock);
 	return 0;
 }
 
 // Flush cache and make all pages clean
 int Flush_Inode_Cache()
 {	
-	Mutex_Lock(&inode_cache_lock);
+	//Mutex_Lock(&inode_cache_lock);
 	int i;
 	CacheInode* cur = inode_manager.first_inode;
 	int rc = 0;
@@ -320,18 +338,18 @@ int Flush_Inode_Cache()
 		rc = rc | Write_Inode_If_Dirty(cur);
 		cur = cur->next;
 	}
-	Mutex_Unlock(&inode_cache_lock);
+	//Mutex_Unlock(&inode_cache_lock);
 	return rc;
 }
 
 // Flush single page
 int Flush_Inode_Cache_Item(int inodeNo)
 {
-	Mutex_Lock(&inode_cache_lock);
+	//Mutex_Lock(&inode_cache_lock);
 	CacheInode* page;
 	int rc = Get_From_Hash_Table(&(inode_manager.cache_hash), inodeNo, (void**)&page);
 	if(rc) return 0;
-	Mutex_Unlock(&inode_cache_lock);
+	//Mutex_Unlock(&inode_cache_lock);
 	return Write_Inode_If_Dirty(page);
 }
 	
@@ -474,19 +492,24 @@ int Allocate_Upto(int inodenum, int allocate_size)
 	int rc = Get_Inode_Into_Cache(inodenum, &inode);
 	if(rc) return rc;
 	// inode should be fixed in the cache
+	//~ Print("Same size %d %d\n", allocate_size, (inode->meta_data).file_size);
 	if(allocate_size <= (inode->meta_data).file_size)
 	{
+		
 		Unfix_Inode_From_Cache(inodenum);
 		return -1;
 	}
 	int final_num_blocks = ((allocate_size - 1) / BLOCK_SIZE) + 1; // Final active number of blocks
 	int current_num_blocks = (((inode->meta_data).file_size - 1) / BLOCK_SIZE) + 1; // Currently active number of blocks
+	if((inode->meta_data).file_size == 0) current_num_blocks = 0;
 	int orig_num_blocks = current_num_blocks; // Originally active number of blocks
+	
 	
 	rc = 0;
 	// Base ptr allocation
 	for(; current_num_blocks < final_num_blocks &&  current_num_blocks < INODE_BASE_SIZE; ++current_num_blocks)
 	{
+		//~ Print("Allocating in base ptr\n");
 		int alloc_block;
 		rc = rc | Allocate_Block(&alloc_block);
 		inode->entries[current_num_blocks] = alloc_block;
@@ -575,12 +598,15 @@ int Allocate_Upto(int inodenum, int allocate_size)
 }
 
 int Get_Block_For_Byte_Address(Inode* inode, int byte_address, int* blocknum)
-{
-	if(byte_address > (inode->meta_data).file_size) return -1;
+{//Print("bbaddr %d %d\n", byte_address, (inode->meta_data).file_size);
+	if(byte_address > (inode->meta_data).file_size) {
+		return -1;
+	 }
 	
 	int block_num = (byte_address / BLOCK_SIZE);
 	if(block_num < INODE_BASE_SIZE) 
 	{
+		//~ Print("Returning from here %d %s\n", inode->meta_data.file_size, inode->meta_data.filename);
 		*blocknum = inode->entries[block_num];
 		return 0;
 	}

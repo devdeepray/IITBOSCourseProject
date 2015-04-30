@@ -25,6 +25,7 @@
 #include <geekos/alarm.h>
 #include <geekos/projects.h>
 #include <geekos/smp.h>
+#include <geekos/oscourse/oft.h>
 
 extern Spin_Lock_t kthreadLock;
 
@@ -124,6 +125,12 @@ static void Init_Thread(struct Kernel_Thread *kthread, void *stackPage,
 	/* Set default user and group ids */
 	kthread->user_id = 1;
 	kthread->group_id = 1;
+	kthread->fdCount = 0;
+	Init_Lft(kthread);
+	
+	
+	/* Stats for virtual fs */
+	kthread->num_disk_accesses = 0;
 
     /*
      * The thread has an implicit self-reference.

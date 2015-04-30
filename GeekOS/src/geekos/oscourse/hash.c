@@ -8,12 +8,15 @@
 
 int Compute_Hash(Hashtable *ht, int key)
 {
+	
 	return (key * ht->mult) % ht->size;
 }
 
 int Init_Hash_Table(Hashtable *ht, int size, int mult)
 {
+	
 	ht->size = size;
+	
 	ht->mult = mult;
 	ht->val_arr = (void**)Malloc(size * sizeof(void*));
 	ht->key_arr = (int*)Malloc(size * sizeof(int));
@@ -74,10 +77,14 @@ int Remove_From_Hash_Table(Hashtable *ht, int key)
 
 int Get_From_Hash_Table(Hashtable *ht, int key, void** val)
 {
+	
 	int pos = Compute_Hash(ht, key);
+	
 	int i;
+	
 	for(i = 0; i < ht->size; ++i)
 	{
+		
 		int index = (pos + i) % ht->size;
 		if(ht->key_arr[index] == key)
 		{

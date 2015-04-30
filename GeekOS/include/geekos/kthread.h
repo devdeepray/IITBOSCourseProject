@@ -74,6 +74,7 @@ struct Kernel_Thread {
 	int group_id;				// Group id of the groups
 	Hashtable lft_hash;			// Hash for local file table
 	int fdCount;				// File descriptor count
+	int num_disk_accesses;		// Count number of actual virtual-disk accesses
 
     /* Last seek position */
     struct Seek_Pos* last_seeked;

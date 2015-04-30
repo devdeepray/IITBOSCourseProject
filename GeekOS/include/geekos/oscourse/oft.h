@@ -14,12 +14,12 @@ typedef struct Global_Fcb {
 int Init_Global_Fcb(Global_Fcb *fcb, int inodeNo);
 
 // The inode will always be in the cache
-int Check_Perms(char op, Inode *buf);
+int Check_Perms(int op, Inode *buf);
 
 // Creates a new Global_Fcb if it does not exist. Otherwise updates existing fcb
-int Open_Oft(int inodeNo, char op);
+int Open_Oft(int inodeNo, int op);
 
-int Close_Oft(int inodeNo, char op);
+int Close_Oft(int inodeNo, int op);
 
 int Init_Oft();
 
@@ -32,18 +32,18 @@ extern Hashtable lft_hash;
 
 typedef struct Local_Fcb {
 	int seekPos;
-	char intendedOp;
+	int intendedOp;
 	int inodeNo;
 	Inode *inode;
 } Local_Fcb;
 
-int Init_Local_Fcb(Local_Fcb *fcb, int inodeNo, char op, Inode *inode);
+int Init_Local_Fcb(Local_Fcb *fcb, int inodeNo, int op, Inode *inode);
 
 int Get_Next_Fd(int *nextFd);
 
 int Init_Lft();
 
-int Open_Lft(int inodeNo, char op, int *fd);
+int Open_Lft(int inodeNo, int op, int *fd);
 
 int Seek_Lft(int fileDes, int byteLoc, SeekStart pos);
 
@@ -65,9 +65,9 @@ int Get_File_Size_Lft(int fd, int *fileSize);
 
 /************************************************************************************************/
 
-int Init_Inode_Metadata(InodeMetaData *md, char* path);
+int Init_Inode_Metadata(InodeMetaData *md, char* fname);
 
-int My_Open(char* path,char* fname, char op, int* fd);
+int My_Open(char* path,char* fname, int op, int* fd);
 
 int My_Close(int fd);
 

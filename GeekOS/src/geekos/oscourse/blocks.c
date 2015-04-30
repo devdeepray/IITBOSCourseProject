@@ -6,6 +6,8 @@
 #include <geekos/oscourse/blocks.h>
 #include <geekos/string.h>
 #include <geekos/synch.h>
+#include <geekos/oscourse/oft.h>
+#include <geekos/oscourse/dirmgmt.h>
 #include <geekos/kassert.h>
 
 #include <geekos/int.h>
@@ -75,26 +77,26 @@ int Format_Disk() {
 	// Assumes sim_disk is initialized
 	int rc;
 	// Format and write superblock onto disk
-	Enable_Interrupts();
+	//Enable_Interrupts();
 	rc = Format_Super_Block();
-	Disable_Interrupts();
+	//Disable_Interrupts();
 	if (rc){
 		Print("blocks.c/Format_Disk: Could not format superblock\n");
 		return rc;
 	}
 	// Format the free list bitmap
-	Enable_Interrupts();
+	//Enable_Interrupts();
 	rc = Init_Free_List();
-	Disable_Interrupts();
+	//Disable_Interrupts();
 	if (rc)
 	{
 		Print("blocks.c/Format_Disk: Free list initialization failed\n");
 		return rc;
 	}
 	// Format the inode bitmap
-Enable_Interrupts();
+//Enable_Interrupts();
 	rc = Format_Inode_Blocks();
-Disable_Interrupts();
+//Disable_Interrupts();
 	if(rc)
 	{
 		Print("blocks.c/Format_Disk: Could not format Inode structures\n");
@@ -136,15 +138,28 @@ int Init_File_System() {
 		Print("blocks.c/Init_File_System: Could not initialize the inode manager\n");
 		return rc;
 	}
+	rc = Init_Oft();
+	if(rc)
+	{
+		Print("blocks.c/Init_File_System: Could not initialize the oft\n");
+		return rc;
+	}
 	Print("File system initialized.\n");
-	Mutex_Init(&free_list_lock);
+	//Mutex_Init(&free_list_lock);
 	return 0;
 }
 
 int Shut_Down_File_System()
 {
+	//~ Print("Deleting things in OFT\n");
+	//~ int rc = Clean_Oft();
+	//~ if(rc)
+	//~ {
+		//~ Print("blocks.c/Shut_Down_File_System: Could not shut down the OFT\n");
+	//~ }
+	
 	Print("Shutting down file system...\n");
-	int rc = Shut_Down_Inode_Manager();
+	int rc = Shut_Down_Inode_Manager() ;
 	if(rc)
 	{
 		Print("blocks.c/Shut_Down_File_System: Could not shut down the inode manager\n");
@@ -317,12 +332,13 @@ int Format_Inode_Blocks()
 	}
 	Inode inode;
 	strcpy(inode.meta_data.filename, "root");
+	inode.meta_data.file_size = sizeof(DirHeader);
 	inode.meta_data.group_id = 1; // all
 	inode.meta_data.owner_id = 1; // root
 	inode.meta_data.permissions = 0177; // All can read, group and owner can write/exec
 	inode.meta_data.is_directory = 1;
 	inode.entries[0] = disk_superblock.rootDirectoryBlock;
-	buf[0] = 0x00;
+	//buf[0] = 0x00;   // Pratik: Is this needed?
 	memcpy(buf, &inode, sizeof(Inode));
 	
 	rc = Write_To_Disk(buf, disk_superblock.firstInodeBlock, 1);
@@ -331,30 +347,29 @@ int Format_Inode_Blocks()
 		Print("blocks.c/Format_Inode_Blocks: Could not write root inode to disk\n");
 		return rc;
 	}
-	//~ DirHeader root_dir_header;
-	//~ root_dir_header.numEntries = 0;
-	//~ root_dir_header.parentInode = -1;
-	//~ for(i = 0; i < BLOCK_SIZE; ++i)
-	//~ {
-		//~ buf[i] = 0;
-	//~ };
-	//~ memcpy(buf, &root_dir_header, sizeof(DirHeader));
-	//~ rc = Write_To_Disk(buf, disk_superblock.rootDirectoryBlock, 1);
-	//~ if(rc)
-	//~ {
-		//~ Print("blocks.c/Format_Inode_Blocks: Could not write some inode blocks to disk");
-		//~ return rc;
-	//~ }
-	
+	Init_Root_Dir();
 	
 	Print("Finished formatting Inode blocks.\n");
 	return 0;
 }
 
+int Init_Root_Dir() {
+	DirHeader roothead;
+	roothead.numEntries = 0;
+	roothead.parentInode = -1;
+	
+	char buf[BLOCK_SIZE];
+	
+	memcpy(buf, (void*)&roothead, sizeof(DirHeader));
+	
+	Write_To_Disk(buf,  disk_superblock.rootDirectoryBlock, 1);
+	return 0;
+	
+}
 
 // Traverses the free blocks bitmap and finds a free block 
 int Allocate_Block(  int* freeBlock) {
-	Mutex_Lock(&free_list_lock);
+	//Mutex_Lock(&free_list_lock);
 	char* buf;
 	  int i, j;
 	int rc = 0;
@@ -366,7 +381,7 @@ int Allocate_Block(  int* freeBlock) {
 		rc = Get_Into_Cache(i + disk_superblock.firstFreeListBitmapBlock, &buf);
 		if(rc) 
 		{	
-			Mutex_Unlock(&free_list_lock);
+			//Mutex_Unlock(&free_list_lock);
 			return rc; // Get into cache error. Fatal
 			
 		}
@@ -404,14 +419,17 @@ int Allocate_Block(  int* freeBlock) {
 		rc = Unfix_From_Cache(i + disk_superblock.firstFreeListBitmapBlock) | rc;
 		if(flag && !rc) rc = Flush_Cache_Block(i + disk_superblock.firstFreeListBitmapBlock);	
 	}
-	Mutex_Unlock(&free_list_lock);
+	//Mutex_Unlock(&free_list_lock);
 	return rc;
 }
 
 /* Frees the given block number by setting the corresponding bit in the bitmap to 0 */
 int Free_Block(  int blockNo) {
-	Mutex_Lock(&free_list_lock);
-	if(blockNo > disk_superblock.totBlocks){Mutex_Unlock(&free_list_lock); return -1;}
+	//Mutex_Lock(&free_list_lock);
+	if(blockNo > disk_superblock.totBlocks){
+		//Mutex_Unlock(&free_list_lock); 
+		return -1;
+	}
 	// Calculate the block number for the corresponding bit
 	int freeListBlockNo = disk_superblock.firstFreeListBitmapBlock + (blockNo / (disk_superblock.blockSizeInBytes * 8));
 	// Calculate char number for corresponding bit
@@ -421,7 +439,10 @@ int Free_Block(  int blockNo) {
 	
 	char *buf;
 	int rc = Get_Into_Cache(freeListBlockNo, &buf); // Blocking call to get something into cache
-	if (rc){Mutex_Unlock(&free_list_lock);return rc;}
+	if (rc){
+		//Mutex_Unlock(&free_list_lock);
+		return rc;
+	}
 	
 	// Set bit to zero
 	buf[charNumber] = buf[charNumber] & ~(0x1 << (7 - bitNumber));
@@ -430,6 +451,6 @@ int Free_Block(  int blockNo) {
 	rc = rc | Set_Dirty(freeListBlockNo);
 	rc = rc | Unfix_From_Cache(freeListBlockNo);
 	rc = rc | Flush_Cache_Block(freeListBlockNo);
-	Mutex_Unlock(&free_list_lock);
+	//Mutex_Unlock(&free_list_lock);
 	return rc;
 }

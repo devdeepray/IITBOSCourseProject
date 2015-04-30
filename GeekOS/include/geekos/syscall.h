@@ -125,7 +125,18 @@ enum {
     SYS_VIR_SEEK,				/* Seek on sim_disk virtual disk */
     SYS_VIR_READ,				/* Read on sim_disk virtual disk */
     SYS_VIR_WRITE,				/* Write on sim_disk virtual disk */
-    SYS_VIR_FORMAT              /* Format the sim_disk virtual disk */  
+    SYS_VIR_FORMAT,             /* Format the sim_disk virtual disk */
+    SYS_VIR_FILE_OPEN,			/* Open a file in the virtual fs */
+    SYS_VIR_FILE_READ,			/* Read a file in the virtual fs */
+    SYS_VIR_FILE_WRITE,			/* Write to a file in the virtual fs */
+    SYS_VIR_FILE_SEEK,			/* Seek a file in the virtual fs */
+    SYS_VIR_FILE_RESIZE,		/* Resize a file in the virtual fs */
+    SYS_VIR_FILE_CLOSE,			/* Close a file in the virtual fs */
+    SYS_VIR_FILE_MKDIR,
+    SYS_VIR_FILE_DEL,
+    SYS_VIR_DISK_ACCESSES,		/* Print disk accesses */
+    SYS_GET_INTO_CACHE,
+    SYS_UNFIX_FROM_CACHE
 };
 
 /*
